@@ -1,0 +1,13 @@
+[profile.default]
+src = "src"
+out = "out"
+libs = ["lib"]
+remappings = [
+    "hedera-smart-contracts/=lib/hedera-smart-contracts/contracts/",
+    "forge-std/=lib/forge-std/src/",
+    "@openzeppelin/=lib/hedera-smart-contracts/node_modules/@openzeppelin/",
+]
+via_ir = true
+solc_version = "0.8.20"
+
+# See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options

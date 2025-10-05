@@ -1,0 +1,45 @@
+{
+  "name": "afrihealth-ledger",
+  "version": "1.0.0",
+  "description": "Hedera-native healthcare and insurance platform with patient-controlled consent and AI-assisted billing",
+  "main": "index.js",
+  "scripts": {
+    "install:all": "npm run install:contracts && npm run install:frontend && npm run install:backend",
+    "install:contracts": "cd contracts && forge install",
+    "install:frontend": "cd frontend && npm install",
+    "install:backend": "cd backend && npm install",
+    "build": "npm run build:contracts && npm run build:frontend",
+    "build:contracts": "cd contracts && forge build",
+    "build:frontend": "cd frontend && npm run build",
+    "test": "npm run test:contracts && npm run test:frontend",
+    "test:contracts": "cd contracts && forge test",
+    "test:frontend": "cd frontend && npm run test",
+    "dev": "cd frontend && npm run dev",
+    "deploy:testnet": "cd scripts && node deploy-testnet.js",
+    "deploy:mainnet": "cd scripts && node deploy-mainnet.js",
+    "lint": "npm run lint:contracts && npm run lint:frontend",
+    "lint:contracts": "cd contracts && npm run lint",
+    "lint:frontend": "cd frontend && npm run lint"
+  },
+  "keywords": [
+    "hedera",
+    "healthcare",
+    "blockchain",
+    "insurance",
+    "smart-contracts",
+    "react",
+    "typescript",
+    "foundry"
+  ],
+  "author": "AfriHealth Ledger Team",
+  "license": "MIT",
+  "workspaces": [
+    "contracts",
+    "frontend",
+    "backend"
+  ],
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}
