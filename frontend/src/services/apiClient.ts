@@ -3,9 +3,10 @@
  * Complete integration layer for backend API calls
  */
 
-import axios, { AxiosInstance, AxiosError } from "axios";
+import axios, { AxiosError } from "axios";
+import type { AxiosInstance } from "axios";
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:3001";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
 export interface ApiResponse<T = any> {
   success: boolean;

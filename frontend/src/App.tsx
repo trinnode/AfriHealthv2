@@ -6,8 +6,8 @@ import {
 } from "react-router-dom";
 import { useEffect } from "react";
 import LandingPage from "./components/LandingPage";
-import PatientDashboard from "./components/PatientDashboard";
-import ProviderDashboard from "frontend/src/components/ProviderDashboard.tsx";
+import PatientDashboard from "./components/PatientDashboardIntegrated";
+import ProviderDashboard from "./components/ProviderDashboardIntegrated";
 import Navbar from "./components/Navbar";
 import { getWalletService } from "./services/walletService";
 import { useWalletStore } from "./stores";

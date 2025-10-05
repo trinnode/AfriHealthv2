@@ -6,21 +6,23 @@ import "../libraries/DiamondStorage.sol";
 import "../utils/AccessControl.sol";
 import "../utils/ReentrancyGuard.sol";
 import "../utils/Pausable.sol";
-import "hedera-smart-contracts/system-contracts/hedera-token-service/HederaTokenService.sol";
 import "hedera-smart-contracts/system-contracts/hedera-token-service/IHederaTokenService.sol";
 import "hedera-smart-contracts/system-contracts/HederaResponseCodes.sol";
 
 /**
  * @title TokenFacet
  * @dev Facet for HTS token management using Hedera Token Service
+ * @notice This contract uses composition to interact with HTS instead of inheritance
+ * to avoid override conflicts with non-virtual functions
  */
 contract TokenFacet is
     IToken,
     AccessControl,
     ReentrancyGuard,
-    Pausable,
-    HederaTokenService
+    Pausable
 {
+    /// @notice Hedera Token Service precompile address
+    address constant HTS_PRECOMPILE = address(0x167);
     /// @notice Storage structure for token data
     struct TokenStorage {
         address platformCreditToken;
@@ -144,6 +146,23 @@ contract TokenFacet is
         TokenStorage storage ts = getTokenStorage();
 
         if (!ts.tokenAssociations[account][token]) {
+            // Call HTS precompile to associate token
+            (bool success, bytes memory result) = HTS_PRECOMPILE.call(
+                abi.encodeWithSignature(
+                    "associateToken(address,address)",
+                    account,
+                    token
+                )
+            );
+            
+            if (success) {
+                int256 responseCode = abi.decode(result, (int256));
+                require(
+                    responseCode == HederaResponseCodes.SUCCESS,
+                    "HTS: token association failed"
+                );
+            }
+
             ts.tokenAssociations[account][token] = true;
             ts.associatedTokens[account].push(token);
 
@@ -160,6 +179,23 @@ contract TokenFacet is
         TokenStorage storage ts = getTokenStorage();
 
         if (ts.tokenAssociations[account][token]) {
+            // Call HTS precompile to dissociate token
+            (bool success, bytes memory result) = HTS_PRECOMPILE.call(
+                abi.encodeWithSignature(
+                    "dissociateToken(address,address)",
+                    account,
+                    token
+                )
+            );
+            
+            if (success) {
+                int256 responseCode = abi.decode(result, (int256));
+                require(
+                    responseCode == HederaResponseCodes.SUCCESS,
+                    "HTS: token dissociation failed"
+                );
+            }
+
             ts.tokenAssociations[account][token] = false;
 
             // Remove from associated tokens array

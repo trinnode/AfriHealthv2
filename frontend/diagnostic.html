@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AfriHealth - Diagnostic</title>
+</head>
+<body style="background: #1a1a1a; color: white; font-family: system-ui; padding: 40px;">
+    <h1>🔍 AfriHealth Diagnostic Page</h1>
+    <div id="status">Loading...</div>
+    
+    <script type="module">
+        const statusDiv = document.getElementById('status');
+        
+        try {
+            statusDiv.innerHTML = '<h2>✅ Basic Module Loading Works</h2>';
+            
+            // Test axios import
+            import('axios').then(() => {
+                statusDiv.innerHTML += '<p>✅ Axios imports successfully</p>';
+            }).catch(err => {
+                statusDiv.innerHTML += `<p>❌ Axios import failed: ${err.message}</p>`;
+            });
+            
+            // Test apiClient import
+            import('./src/services/apiClient.ts').then(() => {
+                statusDiv.innerHTML += '<p>✅ API Client imports successfully</p>';
+            }).catch(err => {
+                statusDiv.innerHTML += `<p>❌ API Client import failed: ${err.message}</p>`;
+                statusDiv.innerHTML += `<pre>${err.stack}</pre>`;
+            });
+            
+            // Test App import
+            import('./src/App.tsx').then(() => {
+                statusDiv.innerHTML += '<p>✅ App imports successfully</p>';
+                statusDiv.innerHTML += '<p><strong>All imports working! Check main app at /</strong></p>';
+            }).catch(err => {
+                statusDiv.innerHTML += `<p>❌ App import failed: ${err.message}</p>`;
+                statusDiv.innerHTML += `<pre>${err.stack}</pre>`;
+            });
+            
+        } catch (err) {
+            statusDiv.innerHTML = `<h2>❌ Critical Error</h2><pre>${err.stack}</pre>`;
+        }
+    </script>
+</body>
+</html>

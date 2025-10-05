@@ -11,11 +11,14 @@ contract Ownable {
     using DiamondStorage for DiamondStorage.DiamondStorageStruct;
 
     /// @notice Emitted when ownership is transferred
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    event OwnershipTransferred(
+        address indexed previousOwner,
+        address indexed newOwner
+    );
 
     /// @notice Returns the address of the current owner
     function owner() public view returns (address) {
-        return DiamondStorage.diamondStorage().getContractOwner();
+        return DiamondStorage.diamondStorage().contractOwner;
     }
 
     /// @notice Throws if called by any account other than the owner
@@ -29,15 +32,22 @@ contract Ownable {
     /// NOTE: Renouncing ownership will leave the contract without an owner,
     /// thereby removing any functionality that is only available to the owner.
     function renounceOwnership() public onlyOwner {
-        DiamondStorage.diamondStorage().setContractOwner(address(0));
+        DiamondStorage.DiamondStorageStruct storage ds = DiamondStorage
+            .diamondStorage();
+        ds.contractOwner = address(0);
         emit OwnershipTransferred(owner(), address(0));
     }
 
     /// @notice Transfers ownership of the contract to a new account (`newOwner`).
     /// Can only be called by the current owner.
     function transferOwnership(address newOwner) public onlyOwner {
-        require(newOwner != address(0), "Ownable: new owner is the zero address");
+        require(
+            newOwner != address(0),
+            "Ownable: new owner is the zero address"
+        );
         emit OwnershipTransferred(owner(), newOwner);
-        DiamondStorage.diamondStorage().setContractOwner(newOwner);
+        DiamondStorage.DiamondStorageStruct storage ds = DiamondStorage
+            .diamondStorage();
+        ds.contractOwner = newOwner;
     }
 }

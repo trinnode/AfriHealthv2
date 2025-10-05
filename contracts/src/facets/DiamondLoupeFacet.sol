@@ -8,12 +8,19 @@ import "../utils/Pausable.sol";
 
 /**
  * @title DiamondLoupeFacet
- * @dev Facet for diamond introspection
+ * @dev Facet for diamond introspection (EIP-2535 Loupe functions)
+ * @notice Provides read-only functions to inspect the diamond
  */
-abstract contract DiamondLoupeFacet is IDiamond, ReentrancyGuard, Pausable {
+contract DiamondLoupeFacet is ReentrancyGuard, Pausable {
     using DiamondStorage for DiamondStorage.DiamondStorageStruct;
 
-    /// @inheritdoc IDiamond
+    /// @notice Facet structure
+    struct Facet {
+        address facetAddress;
+        bytes4[] functionSelectors;
+    }
+
+    /// @notice Get all facets and their selectors
     function facets() external view returns (Facet[] memory facets_) {
         DiamondStorage.DiamondStorageStruct storage ds = DiamondStorage
             .diamondStorage();
@@ -32,7 +39,6 @@ abstract contract DiamondLoupeFacet is IDiamond, ReentrancyGuard, Pausable {
         }
     }
 
-    /// @inheritdoc IDiamond
     function facetAddresses()
         external
         view
@@ -46,7 +52,6 @@ abstract contract DiamondLoupeFacet is IDiamond, ReentrancyGuard, Pausable {
         facetAddresses_ = new address[](0);
     }
 
-    /// @inheritdoc IDiamond
     function facetAddress(
         bytes4 _functionSelector
     ) external view returns (address facetAddress_) {
@@ -55,14 +60,12 @@ abstract contract DiamondLoupeFacet is IDiamond, ReentrancyGuard, Pausable {
         return ds.selectorToFacet[_functionSelector];
     }
 
-    /// @inheritdoc IDiamond
     function facetFunctionSelectors(
         address _facet
     ) external view returns (bytes4[] memory facetFunctionSelectors_) {
         return DiamondStorage.getFacetSelectors(_facet);
     }
 
-    /// @inheritdoc IDiamond
     function supportsInterface(
         bytes4 _interfaceId
     ) external pure returns (bool) {
@@ -94,9 +97,7 @@ abstract contract DiamondLoupeFacet is IDiamond, ReentrancyGuard, Pausable {
     function isFunctionSelectorExists(
         bytes4 _functionSelector
     ) external view returns (bool exists) {
-        DiamondStorage.DiamondStorageStruct storage ds = DiamondStorage
-            .diamondStorage();
-        return ds.getFacetAddress(_functionSelector) != address(0);
+        return DiamondStorage.getFacetAddress(_functionSelector) != address(0);
     }
 
     /**
@@ -118,7 +119,7 @@ abstract contract DiamondLoupeFacet is IDiamond, ReentrancyGuard, Pausable {
     function owner() external view returns (address) {
         DiamondStorage.DiamondStorageStruct storage ds = DiamondStorage
             .diamondStorage();
-        return ds.getContractOwner();
+        return ds.contractOwner;
     }
 
     /**
@@ -127,7 +128,7 @@ abstract contract DiamondLoupeFacet is IDiamond, ReentrancyGuard, Pausable {
     function getDiamondCutFacet() external view returns (address) {
         DiamondStorage.DiamondStorageStruct storage ds = DiamondStorage
             .diamondStorage();
-        return ds.getDiamondCutFacet();
+        return ds.diamondCutFacet;
     }
 
     /**
@@ -136,6 +137,6 @@ abstract contract DiamondLoupeFacet is IDiamond, ReentrancyGuard, Pausable {
     function contractOwner() external view returns (address) {
         DiamondStorage.DiamondStorageStruct storage ds = DiamondStorage
             .diamondStorage();
-        return ds.getContractOwner();
+        return ds.contractOwner;
     }
 }

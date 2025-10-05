@@ -254,19 +254,22 @@ contract GovernanceFacet is IGovernance, AccessControl, ReentrancyGuard, Pausabl
 
     /// @inheritdoc IGovernance
     function emergencyPause(string calldata reason) external onlyAdmin nonReentrant {
-        DiamondStorage.diamondStorage().setEmergencyPaused(true);
+        DiamondStorage.DiamondStorageStruct storage ds = DiamondStorage.diamondStorage();
+        ds.emergencyPaused = true;
         emit EmergencyPaused(msg.sender, reason);
     }
 
     /// @inheritdoc IGovernance
     function emergencyUnpause() external onlyAdmin nonReentrant {
-        DiamondStorage.diamondStorage().setEmergencyPaused(false);
+        DiamondStorage.DiamondStorageStruct storage ds = DiamondStorage.diamondStorage();
+        ds.emergencyPaused = false;
         emit EmergencyUnpaused(msg.sender);
     }
 
     /// @inheritdoc IGovernance
     function isPaused() external view returns (bool) {
-        return DiamondStorage.diamondStorage().isPaused();
+        DiamondStorage.DiamondStorageStruct storage ds = DiamondStorage.diamondStorage();
+        return ds.paused;
     }
 
     /// @inheritdoc IGovernance
