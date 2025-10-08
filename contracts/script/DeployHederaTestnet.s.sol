@@ -64,12 +64,7 @@ contract DeployHederaTestnet is Script {
         // Get deployer private key from environment variable
         // For local testing with Anvil, you can use the default Anvil key
         // For Hedera testnet/mainnet, set DEPLOYER_PRIVATE_KEY in .env
-        uint256 deployerPrivateKey = vm.envOr(
-            "DEPLOYER_PRIVATE_KEY",
-            uint256(
-                0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
-            )
-        );
+        uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
         address deployer = vm.addr(deployerPrivateKey);
 
         console.log("===========================================");

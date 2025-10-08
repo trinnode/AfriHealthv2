@@ -1,0 +1,22 @@
+{
+  "network": "testnet",
+  "timestamp": "2025-10-08T17:45:36.510Z",
+  "operator": "0.0.6861927",
+  "topics": {
+    "consent": {
+      "topicId": "0.0.6993083",
+      "name": "AfriHealth Consent Topic",
+      "memo": "Patient consent records and access control logs"
+    },
+    "billing": {
+      "topicId": "0.0.6993086",
+      "name": "AfriHealth Billing Topic",
+      "memo": "Healthcare billing and payment records"
+    },
+    "claims": {
+      "topicId": "0.0.6993087",
+      "name": "AfriHealth Claims Topic",
+      "memo": "Insurance claims and approvals"
+    }
+  }
+}

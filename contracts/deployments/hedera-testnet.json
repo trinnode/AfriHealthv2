@@ -1,0 +1,18 @@
+{
+  "network": "hedera-testnet",
+  "chainId": 296,
+  "timestamp": 1759943930,
+  "contracts": {
+    "Diamond": "0xC3b66a49c838e5472034169D4621Fe8Aad699A49",
+    "DiamondCutFacet": "0xCc01cd63586b170651795EB720EAdfc4fea8ef42",
+    "DiamondLoupeFacet": "0xB5D9A06851fC9191b2930a1e19923d4647cF2342",
+    "AccessControlFacet": "0x4b81E7CB8cfE057B299C869995f4A6Ca977b9441",
+    "ConsentFacet": "0xbDaBE1898d24b0572ABFcac9c9C38fdaF93a6089",
+    "TokenFacet": "0xA5D639d3E9a30Cb3e5e2Be55b3f635757545dE5f",
+    "BillingFacet": "0xe27D52fa076e0221945bBa070bE32314a9FAC86f",
+    "ClaimsFacet": "0x9508b921C26490d63223AA0486C02979D2E68780",
+    "InsurancePoolFacet": "0x4c9c785647be0615E4989a11A3A78DC6395A9f05",
+    "IdentityFacet": "0x807cA7d2BB9523970DeB2f9705D19651634fDC9D",
+    "RecordsRegistryFacet": "0x22C23D4fe94A49642A7304b3a898F670dC03CC48"
+  }
+}
