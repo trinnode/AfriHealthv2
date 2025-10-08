@@ -12,10 +12,15 @@ import "../utils/IdGenerator.sol";
  * @title RecordsRegistryFacet
  * @dev Facet for medical records registry management
  */
-contract RecordsRegistryFacet is IRecordsRegistry, AccessControl, ReentrancyGuard, Pausable {
+contract RecordsRegistryFacet is
+    IRecordsRegistry,
+    AccessControl,
+    ReentrancyGuard,
+    Pausable
+{
     using DiamondStorage for DiamondStorage.DiamondStorageStruct;
 
-    /// @notice Storage structure for records data
+    /// Storage structure for records data
     struct RecordsStorage {
         mapping(bytes32 => RecordInfo) records;
         mapping(address => bytes32[]) patientRecords;
@@ -24,7 +29,7 @@ contract RecordsRegistryFacet is IRecordsRegistry, AccessControl, ReentrancyGuar
         mapping(bytes32 => uint256) recordAccessCount;
     }
 
-    /// @notice Record information structure
+    /// Record information structure
     struct RecordInfo {
         address patient;
         address provider;
@@ -38,21 +43,25 @@ contract RecordsRegistryFacet is IRecordsRegistry, AccessControl, ReentrancyGuar
         bool isActive;
     }
 
-    /// @notice Access event structure
+    /// Access event structure
     struct AccessEvent {
         address accessor;
         string purpose;
         uint256 timestamp;
     }
 
-    /// @notice Storage position for records data
+    /// Storage position for records data
     bytes32 constant RECORDS_STORAGE_POSITION =
         keccak256("diamond.records.storage");
 
     /**
      * @dev Get records storage
      */
-    function getRecordsStorage() internal pure returns (RecordsStorage storage rs) {
+    function getRecordsStorage()
+        internal
+        pure
+        returns (RecordsStorage storage rs)
+    {
         bytes32 position = RECORDS_STORAGE_POSITION;
         assembly {
             rs.slot := position
@@ -67,7 +76,13 @@ contract RecordsRegistryFacet is IRecordsRegistry, AccessControl, ReentrancyGuar
         string calldata recordUri,
         string[] calldata scopes,
         uint256 retentionPeriod
-    ) external onlyProvider nonReentrant whenNotPaused returns (bytes32 recordId) {
+    )
+        external
+        onlyProvider
+        nonReentrant
+        whenNotPaused
+        returns (bytes32 recordId)
+    {
         RecordsStorage storage rs = getRecordsStorage();
 
         recordId = IdGenerator.generateRecordId(
@@ -112,9 +127,15 @@ contract RecordsRegistryFacet is IRecordsRegistry, AccessControl, ReentrancyGuar
     }
 
     /// @inheritdoc IRecordsRegistry
-    function logRecordAccess(bytes32 recordId, string calldata purpose) external nonReentrant {
+    function logRecordAccess(
+        bytes32 recordId,
+        string calldata purpose
+    ) external nonReentrant {
         RecordsStorage storage rs = getRecordsStorage();
-        require(rs.records[recordId].isActive, "RecordsRegistry: record not active");
+        require(
+            rs.records[recordId].isActive,
+            "RecordsRegistry: record not active"
+        );
 
         AccessEvent memory accessEvent = AccessEvent({
             accessor: msg.sender,
@@ -129,28 +150,42 @@ contract RecordsRegistryFacet is IRecordsRegistry, AccessControl, ReentrancyGuar
     }
 
     /// @inheritdoc IRecordsRegistry
-    function setRetentionPolicy(bytes32 recordId, uint256 retentionPeriod) external onlyAdmin nonReentrant {
+    function setRetentionPolicy(
+        bytes32 recordId,
+        uint256 retentionPeriod
+    ) external onlyAdmin nonReentrant {
         RecordsStorage storage rs = getRecordsStorage();
-        require(rs.records[recordId].isActive, "RecordsRegistry: record not active");
+        require(
+            rs.records[recordId].isActive,
+            "RecordsRegistry: record not active"
+        );
 
         rs.records[recordId].retentionPeriod = retentionPeriod;
-        rs.records[recordId].expiresAt = block.timestamp + (retentionPeriod * 1 days);
+        rs.records[recordId].expiresAt =
+            block.timestamp +
+            (retentionPeriod * 1 days);
 
         emit RetentionPolicySet(recordId, retentionPeriod, msg.sender);
     }
 
     /// @inheritdoc IRecordsRegistry
-    function getRecord(bytes32 recordId) external view returns (
-        address patient,
-        address provider,
-        string memory recordType,
-        bytes32 recordHash,
-        string memory recordUri,
-        string[] memory scopes,
-        uint256 retentionPeriod,
-        uint256 registeredAt,
-        uint256 expiresAt
-    ) {
+    function getRecord(
+        bytes32 recordId
+    )
+        external
+        view
+        returns (
+            address patient,
+            address provider,
+            string memory recordType,
+            bytes32 recordHash,
+            string memory recordUri,
+            string[] memory scopes,
+            uint256 retentionPeriod,
+            uint256 registeredAt,
+            uint256 expiresAt
+        )
+    {
         RecordsStorage storage rs = getRecordsStorage();
         RecordInfo memory record = rs.records[recordId];
 
@@ -185,7 +220,9 @@ contract RecordsRegistryFacet is IRecordsRegistry, AccessControl, ReentrancyGuar
         bytes32[] memory filtered = new bytes32[](allRecords.length);
 
         for (uint256 i = 0; i < allRecords.length; i++) {
-            if (_stringEquals(rs.records[allRecords[i]].recordType, recordType)) {
+            if (
+                _stringEquals(rs.records[allRecords[i]].recordType, recordType)
+            ) {
                 filtered[count] = allRecords[i];
                 count++;
             }
@@ -201,7 +238,10 @@ contract RecordsRegistryFacet is IRecordsRegistry, AccessControl, ReentrancyGuar
     }
 
     /// @inheritdoc IRecordsRegistry
-    function getRecordsByScope(address patient, string calldata scope) external view returns (bytes32[] memory recordIds) {
+    function getRecordsByScope(
+        address patient,
+        string calldata scope
+    ) external view returns (bytes32[] memory recordIds) {
         RecordsStorage storage rs = getRecordsStorage();
         return rs.patientRecordsByScope[patient][scope];
     }
@@ -210,11 +250,15 @@ contract RecordsRegistryFacet is IRecordsRegistry, AccessControl, ReentrancyGuar
     function getRecordAccessHistory(
         bytes32 recordId,
         uint256 limit
-    ) external view returns (
-        address[] memory accessors,
-        string[] memory purposes,
-        uint256[] memory timestamps
-    ) {
+    )
+        external
+        view
+        returns (
+            address[] memory accessors,
+            string[] memory purposes,
+            uint256[] memory timestamps
+        )
+    {
         RecordsStorage storage rs = getRecordsStorage();
         AccessEvent[] memory events = rs.recordAccessHistory[recordId];
 
@@ -267,7 +311,10 @@ contract RecordsRegistryFacet is IRecordsRegistry, AccessControl, ReentrancyGuar
     }
 
     /// @inheritdoc IRecordsRegistry
-    function getExpiringRecords(uint256 withinDays, uint256 limit) external view returns (bytes32[] memory recordIds) {
+    function getExpiringRecords(
+        uint256 withinDays,
+        uint256 limit
+    ) external view returns (bytes32[] memory recordIds) {
         RecordsStorage storage rs = getRecordsStorage();
 
         uint256 futureTimestamp = block.timestamp + (withinDays * 1 days);
@@ -293,17 +340,31 @@ contract RecordsRegistryFacet is IRecordsRegistry, AccessControl, ReentrancyGuar
     }
 
     /// @inheritdoc IRecordsRegistry
-    function cleanupExpiredRecords() external onlyAdmin nonReentrant returns (uint256 cleanedCount) {
+    function cleanupExpiredRecords()
+        external
+        onlyAdmin
+        nonReentrant
+        returns (uint256 cleanedCount)
+    {
         // Implementation would iterate through all records and mark expired ones as inactive
         // For now, return 0
         return 0;
     }
 
     /// @inheritdoc IRecordsRegistry
-    function updateRecordUri(bytes32 recordId, string calldata newUri) external nonReentrant {
+    function updateRecordUri(
+        bytes32 recordId,
+        string calldata newUri
+    ) external nonReentrant {
         RecordsStorage storage rs = getRecordsStorage();
-        require(rs.records[recordId].provider == msg.sender, "RecordsRegistry: not record provider");
-        require(rs.records[recordId].isActive, "RecordsRegistry: record not active");
+        require(
+            rs.records[recordId].provider == msg.sender,
+            "RecordsRegistry: not record provider"
+        );
+        require(
+            rs.records[recordId].isActive,
+            "RecordsRegistry: record not active"
+        );
 
         rs.records[recordId].recordUri = newUri;
     }
@@ -311,7 +372,10 @@ contract RecordsRegistryFacet is IRecordsRegistry, AccessControl, ReentrancyGuar
     /**
      * @dev Apply limit to array
      */
-    function _applyLimit(bytes32[] memory array, uint256 limit) internal pure returns (bytes32[] memory) {
+    function _applyLimit(
+        bytes32[] memory array,
+        uint256 limit
+    ) internal pure returns (bytes32[] memory) {
         if (limit == 0 || limit >= array.length) {
             return array;
         }
@@ -326,7 +390,10 @@ contract RecordsRegistryFacet is IRecordsRegistry, AccessControl, ReentrancyGuar
     /**
      * @dev Compare strings for equality
      */
-    function _stringEquals(string memory a, string memory b) internal pure returns (bool) {
+    function _stringEquals(
+        string memory a,
+        string memory b
+    ) internal pure returns (bool) {
         return keccak256(abi.encodePacked(a)) == keccak256(abi.encodePacked(b));
     }
 }

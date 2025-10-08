@@ -141,7 +141,7 @@ const QueryTokenGeneralInfomation = ({ baseContract }: PageProps) => {
   };
 
   /** @dev handle invoking the API to interact with smart contract and query token info */
-  /** @NOTICE WILL COME BACK SOON */
+  /** WILL COME BACK SOON */
   const handleQueryTokenInfo = async (API: API_NAMES) => {
     // destructuring param values
     const { hederaTokenAddress, serialNumber } = paramValues;

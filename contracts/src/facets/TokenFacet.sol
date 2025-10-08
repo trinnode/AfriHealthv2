@@ -12,18 +12,13 @@ import "hedera-smart-contracts/system-contracts/HederaResponseCodes.sol";
 /**
  * @title TokenFacet
  * @dev Facet for HTS token management using Hedera Token Service
- * @notice This contract uses composition to interact with HTS instead of inheritance
+ * This contract uses composition to interact with HTS instead of inheritance
  * to avoid override conflicts with non-virtual functions
  */
-contract TokenFacet is
-    IToken,
-    AccessControl,
-    ReentrancyGuard,
-    Pausable
-{
-    /// @notice Hedera Token Service precompile address
+contract TokenFacet is IToken, AccessControl, ReentrancyGuard, Pausable {
+    /// Hedera Token Service precompile address
     address constant HTS_PRECOMPILE = address(0x167);
-    /// @notice Storage structure for token data
+    /// Storage structure for token data
     struct TokenStorage {
         address platformCreditToken;
         address insurancePoolToken;
@@ -34,7 +29,7 @@ contract TokenFacet is
         mapping(address => uint256) mintAllowances;
     }
 
-    /// @notice Storage position for token data
+    /// Storage position for token data
     bytes32 constant TOKEN_STORAGE_POSITION =
         keccak256("diamond.token.storage");
 
@@ -154,7 +149,7 @@ contract TokenFacet is
                     token
                 )
             );
-            
+
             if (success) {
                 int256 responseCode = abi.decode(result, (int256));
                 require(
@@ -187,7 +182,7 @@ contract TokenFacet is
                     token
                 )
             );
-            
+
             if (success) {
                 int256 responseCode = abi.decode(result, (int256));
                 require(

@@ -64,7 +64,7 @@ export const handleKeyTypeOnChange = (
   setKeyTypesToShow: Dispatch<SetStateAction<Set<IHederaTokenServiceKeyType>>>
 ) => {
   let newKeyType = e.target.value;
-  // @notice as the currentKey is based on `keys` array, must reserve the currentKey first
+  // as the currentKey is based on `keys` array, must reserve the currentKey first
   let currentKeyType = currentKey.keyType;
 
   setKeys((prev) =>

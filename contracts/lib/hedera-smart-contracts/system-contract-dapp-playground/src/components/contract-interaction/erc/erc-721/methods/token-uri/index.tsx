@@ -75,7 +75,7 @@ const ERC721TokenURI = ({ baseContract }: PageProps) => {
   }, [toaster, transactionResultStorageKey]);
 
   /** @dev handle executing tokenURI */
-  /** @notice wrapping handleExecuteTokenURI in useCallback hook to prevent excessive re-renders */
+  /** wrapping handleExecuteTokenURI in useCallback hook to prevent excessive re-renders */
   const handleExecuteTokenURI = useCallback(
     async (tokenIdValue: number, refreshMode?: boolean) => {
       // sanitize params

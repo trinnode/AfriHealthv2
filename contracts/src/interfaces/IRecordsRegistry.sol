@@ -6,7 +6,7 @@ pragma solidity ^0.8.20;
  * @dev Interface for medical records registry in AfriHealth Ledger
  */
 interface IRecordsRegistry {
-    /// @notice Emitted when a record is registered
+    /// Emitted when a record is registered
     event RecordRegistered(
         bytes32 indexed recordId,
         address indexed patient,
@@ -17,7 +17,7 @@ interface IRecordsRegistry {
         uint256 registeredAt
     );
 
-    /// @notice Emitted when record access is logged
+    /// Emitted when record access is logged
     event RecordAccessed(
         bytes32 indexed recordId,
         address indexed accessedBy,
@@ -25,14 +25,14 @@ interface IRecordsRegistry {
         uint256 accessedAt
     );
 
-    /// @notice Emitted when record retention policy is set
+    /// Emitted when record retention policy is set
     event RetentionPolicySet(
         bytes32 indexed recordId,
         uint256 retentionPeriod,
         address indexed setBy
     );
 
-    /// @notice Register a medical record
+    /// Register a medical record
     /// @param patient Patient address
     /// @param recordType Type of record (e.g., "lab_result", "prescription", "imaging")
     /// @param recordHash Hash of the record data
@@ -49,17 +49,23 @@ interface IRecordsRegistry {
         uint256 retentionPeriod
     ) external returns (bytes32 recordId);
 
-    /// @notice Log record access (for audit purposes)
+    /// Log record access (for audit purposes)
     /// @param recordId Record identifier
     /// @param purpose Purpose of access
-    function logRecordAccess(bytes32 recordId, string calldata purpose) external;
+    function logRecordAccess(
+        bytes32 recordId,
+        string calldata purpose
+    ) external;
 
-    /// @notice Set retention policy for a record
+    /// Set retention policy for a record
     /// @param recordId Record identifier
     /// @param retentionPeriod New retention period in days
-    function setRetentionPolicy(bytes32 recordId, uint256 retentionPeriod) external;
+    function setRetentionPolicy(
+        bytes32 recordId,
+        uint256 retentionPeriod
+    ) external;
 
-    /// @notice Get record details
+    /// Get record details
     /// @param recordId Record identifier
     /// @return patient Patient address
     /// @return provider Provider address
@@ -70,19 +76,24 @@ interface IRecordsRegistry {
     /// @return retentionPeriod Retention period in days
     /// @return registeredAt When record was registered
     /// @return expiresAt When record expires
-    function getRecord(bytes32 recordId) external view returns (
-        address patient,
-        address provider,
-        string memory recordType,
-        bytes32 recordHash,
-        string memory recordUri,
-        string[] memory scopes,
-        uint256 retentionPeriod,
-        uint256 registeredAt,
-        uint256 expiresAt
-    );
+    function getRecord(
+        bytes32 recordId
+    )
+        external
+        view
+        returns (
+            address patient,
+            address provider,
+            string memory recordType,
+            bytes32 recordHash,
+            string memory recordUri,
+            string[] memory scopes,
+            uint256 retentionPeriod,
+            uint256 registeredAt,
+            uint256 expiresAt
+        );
 
-    /// @notice Get records for a patient
+    /// Get records for a patient
     /// @param patient Patient address
     /// @param recordType Filter by record type (empty string for all)
     /// @param limit Maximum number of records to return
@@ -93,13 +104,16 @@ interface IRecordsRegistry {
         uint256 limit
     ) external view returns (bytes32[] memory recordIds);
 
-    /// @notice Get records by scope
+    /// Get records by scope
     /// @param patient Patient address
     /// @param scope Data scope to filter by
     /// @return recordIds Array of record identifiers in the scope
-    function getRecordsByScope(address patient, string calldata scope) external view returns (bytes32[] memory recordIds);
+    function getRecordsByScope(
+        address patient,
+        string calldata scope
+    ) external view returns (bytes32[] memory recordIds);
 
-    /// @notice Get access history for a record
+    /// Get access history for a record
     /// @param recordId Record identifier
     /// @param limit Maximum number of access events to return
     /// @return accessors Array of accounts that accessed the record
@@ -108,13 +122,16 @@ interface IRecordsRegistry {
     function getRecordAccessHistory(
         bytes32 recordId,
         uint256 limit
-    ) external view returns (
-        address[] memory accessors,
-        string[] memory purposes,
-        uint256[] memory timestamps
-    );
+    )
+        external
+        view
+        returns (
+            address[] memory accessors,
+            string[] memory purposes,
+            uint256[] memory timestamps
+        );
 
-    /// @notice Check if record is accessible by account for scope
+    /// Check if record is accessible by account for scope
     /// @param recordId Record identifier
     /// @param account Account requesting access
     /// @param scope Required data scope
@@ -126,22 +143,25 @@ interface IRecordsRegistry {
         string calldata scope
     ) external view returns (bool isAccessible, uint256 expiresAt);
 
-    /// @notice Check if record is expired
+    /// Check if record is expired
     /// @param recordId Record identifier
     /// @return True if record is expired
     function isRecordExpired(bytes32 recordId) external view returns (bool);
 
-    /// @notice Get records expiring soon
+    /// Get records expiring soon
     /// @param withinDays Check for records expiring within this many days
     /// @param limit Maximum number of records to return
     /// @return recordIds Array of record identifiers expiring soon
-    function getExpiringRecords(uint256 withinDays, uint256 limit) external view returns (bytes32[] memory recordIds);
+    function getExpiringRecords(
+        uint256 withinDays,
+        uint256 limit
+    ) external view returns (bytes32[] memory recordIds);
 
-    /// @notice Clean up expired records (admin only)
+    /// Clean up expired records (admin only)
     /// @return cleanedCount Number of records cleaned up
     function cleanupExpiredRecords() external returns (uint256 cleanedCount);
 
-    /// @notice Update record URI
+    /// Update record URI
     /// @param recordId Record identifier
     /// @param newUri New URI for the record
     function updateRecordUri(bytes32 recordId, string calldata newUri) external;

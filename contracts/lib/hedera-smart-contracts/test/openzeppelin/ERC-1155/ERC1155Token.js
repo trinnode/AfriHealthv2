@@ -127,7 +127,7 @@ describe('@OZERC1155Token Test Suite', () => {
 
   it('Should retireve the total supply of a token ID', async () => {
     /**
-     * @notice as there are two different selectors with the same interfaceID, it's needed to specify the interfaceID as bellow
+     * as there are two different selectors with the same interfaceID, it's needed to specify the interfaceID as bellow
      */
     const beforeMintBalance = await erc1155Token['totalSupply(uint256)'](
       TOKEN_ID
@@ -138,7 +138,7 @@ describe('@OZERC1155Token Test Suite', () => {
     await mintTx.wait();
 
     /**
-     * @notice as there are two different selectors with the same interfaceID, it's needed to specify the interfaceID as bellow
+     * as there are two different selectors with the same interfaceID, it's needed to specify the interfaceID as bellow
      */
     const afterMintBalance = await erc1155Token['totalSupply(uint256)'](
       TOKEN_ID
@@ -157,7 +157,7 @@ describe('@OZERC1155Token Test Suite', () => {
     const expectedTotalySupply = MINTED_AMOUNTS.reduce((a, c) => a + c, 0);
 
     /**
-     * @notice as there are two different selectors with the same interfaceID, it's needed to specify the interfaceID as bellow
+     * as there are two different selectors with the same interfaceID, it's needed to specify the interfaceID as bellow
      */
     const totalSupply = await erc1155Token['totalSupply()']();
 

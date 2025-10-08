@@ -19,7 +19,7 @@
  */
 
 /**
- * @notice this scripts is mainly designed to freeze the local network node to prepare for network migration (mono to mod)
+ * this scripts is mainly designed to freeze the local network node to prepare for network migration (mono to mod)
  */
 const {
   FreezeTransaction,

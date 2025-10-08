@@ -25,7 +25,7 @@ import { Contract, ethers, isAddress } from 'ethers';
 /**
  * @dev get token information
  *
- * @notice execute name(), symbol()
+ * execute name(), symbol()
  *
  * @param baseContract: Contract
  *

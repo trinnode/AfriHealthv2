@@ -20,7 +20,7 @@
 
 import { HEDERA_SHARED_PARAM_INPUT_FIELDS } from '@/utils/common/constants';
 
-/** @notice an object holding information for the tokenRelation's input fields */
+/** an object holding information for the tokenRelation's input fields */
 export const htsQueryTokenInfoParamFields = {
   hederaTokenAddress: {
     ...HEDERA_SHARED_PARAM_INPUT_FIELDS,
@@ -38,7 +38,7 @@ export const htsQueryTokenInfoParamFields = {
   },
 };
 
-/** @notice an object holding information for the queryTokenPermission's input fields */
+/** an object holding information for the queryTokenPermission's input fields */
 export const htsQueryTokenPermissionParamFields = {
   hederaTokenAddress: {
     ...HEDERA_SHARED_PARAM_INPUT_FIELDS,
@@ -70,7 +70,7 @@ export const htsQueryTokenPermissionParamFields = {
   },
 };
 
-/** @notice an object holding information for the queryTokenInfo's input fields */
+/** an object holding information for the queryTokenInfo's input fields */
 export const htsQueryTokenStatusParamFields = {
   hederaTokenAddress: {
     ...HEDERA_SHARED_PARAM_INPUT_FIELDS,

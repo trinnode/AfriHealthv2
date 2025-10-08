@@ -12,10 +12,15 @@ import "../utils/IdGenerator.sol";
  * @title InsurancePoolFacet
  * @dev Facet for insurance pool management
  */
-contract InsurancePoolFacet is IInsurancePool, AccessControl, ReentrancyGuard, Pausable {
+contract InsurancePoolFacet is
+    IInsurancePool,
+    AccessControl,
+    ReentrancyGuard,
+    Pausable
+{
     using DiamondStorage for DiamondStorage.DiamondStorageStruct;
 
-    /// @notice Storage structure for insurance pool data
+    /// Storage structure for insurance pool data
     struct InsurancePoolStorage {
         PoolInfo poolInfo;
         mapping(address => MemberInfo) members;
@@ -24,7 +29,7 @@ contract InsurancePoolFacet is IInsurancePool, AccessControl, ReentrancyGuard, P
         bytes32[] activeClaims;
     }
 
-    /// @notice Pool information structure
+    /// Pool information structure
     struct PoolInfo {
         uint256 reserveRatio;
         uint256 solvencyThreshold;
@@ -34,7 +39,7 @@ contract InsurancePoolFacet is IInsurancePool, AccessControl, ReentrancyGuard, P
         bool isActive;
     }
 
-    /// @notice Member information structure
+    /// Member information structure
     struct MemberInfo {
         uint256 joinedAt;
         uint256 coverageAmount;
@@ -43,7 +48,7 @@ contract InsurancePoolFacet is IInsurancePool, AccessControl, ReentrancyGuard, P
         bool isActive;
     }
 
-    /// @notice Claim information structure
+    /// Claim information structure
     struct ClaimInfo {
         bytes32 claimId;
         address member;
@@ -56,14 +61,18 @@ contract InsurancePoolFacet is IInsurancePool, AccessControl, ReentrancyGuard, P
         uint256 paidAt;
     }
 
-    /// @notice Storage position for insurance pool data
+    /// Storage position for insurance pool data
     bytes32 constant INSURANCE_POOL_STORAGE_POSITION =
         keccak256("diamond.insurancepool.storage");
 
     /**
      * @dev Get insurance pool storage
      */
-    function getInsurancePoolStorage() internal pure returns (InsurancePoolStorage storage ips) {
+    function getInsurancePoolStorage()
+        internal
+        pure
+        returns (InsurancePoolStorage storage ips)
+    {
         bytes32 position = INSURANCE_POOL_STORAGE_POSITION;
         assembly {
             ips.slot := position
@@ -71,8 +80,14 @@ contract InsurancePoolFacet is IInsurancePool, AccessControl, ReentrancyGuard, P
     }
 
     /// @inheritdoc IInsurancePool
-    function initializePool(uint256 reserveRatio, uint256 solvencyThreshold) external nonReentrant {
-        require(hasRole(ADMIN_ROLE, msg.sender), "InsurancePool: must have admin role");
+    function initializePool(
+        uint256 reserveRatio,
+        uint256 solvencyThreshold
+    ) external nonReentrant {
+        require(
+            hasRole(ADMIN_ROLE, msg.sender),
+            "InsurancePool: must have admin role"
+        );
         InsurancePoolStorage storage ips = getInsurancePoolStorage();
 
         ips.poolInfo = PoolInfo({
@@ -88,14 +103,20 @@ contract InsurancePoolFacet is IInsurancePool, AccessControl, ReentrancyGuard, P
     }
 
     /// @inheritdoc IInsurancePool
-    function joinPool(uint256 premiumAmount, uint256 coverageAmount) external nonReentrant whenNotPaused {
+    function joinPool(
+        uint256 premiumAmount,
+        uint256 coverageAmount
+    ) external nonReentrant whenNotPaused {
         InsurancePoolStorage storage ips = getInsurancePoolStorage();
         require(ips.poolInfo.isActive, "InsurancePool: pool not active");
 
         // Calculate required premium based on coverage
         uint256 requiredPremium = coverageAmount / 1000; // Simple calculation
 
-        require(premiumAmount >= requiredPremium, "InsurancePool: insufficient premium");
+        require(
+            premiumAmount >= requiredPremium,
+            "InsurancePool: insufficient premium"
+        );
 
         if (ips.members[msg.sender].isActive) {
             // Update existing member
@@ -116,13 +137,21 @@ contract InsurancePoolFacet is IInsurancePool, AccessControl, ReentrancyGuard, P
 
         ips.poolInfo.totalReserves += premiumAmount;
 
-        emit MemberJoined(msg.sender, premiumAmount, coverageAmount, msg.sender);
+        emit MemberJoined(
+            msg.sender,
+            premiumAmount,
+            coverageAmount,
+            msg.sender
+        );
     }
 
     /// @inheritdoc IInsurancePool
     function leavePool() external nonReentrant {
         InsurancePoolStorage storage ips = getInsurancePoolStorage();
-        require(ips.members[msg.sender].isActive, "InsurancePool: not a member");
+        require(
+            ips.members[msg.sender].isActive,
+            "InsurancePool: not a member"
+        );
 
         MemberInfo memory member = ips.members[msg.sender];
 
@@ -140,12 +169,18 @@ contract InsurancePoolFacet is IInsurancePool, AccessControl, ReentrancyGuard, P
     }
 
     /// @inheritdoc IInsurancePool
-    function payPremium(uint256 coveragePeriod) external nonReentrant whenNotPaused {
+    function payPremium(
+        uint256 coveragePeriod
+    ) external nonReentrant whenNotPaused {
         InsurancePoolStorage storage ips = getInsurancePoolStorage();
-        require(ips.members[msg.sender].isActive, "InsurancePool: not a member");
+        require(
+            ips.members[msg.sender].isActive,
+            "InsurancePool: not a member"
+        );
 
         // Calculate premium for period
-        uint256 premiumAmount = (ips.members[msg.sender].coverageAmount / 1000) * coveragePeriod;
+        uint256 premiumAmount = (ips.members[msg.sender].coverageAmount /
+            1000) * coveragePeriod;
 
         // Update member
         ips.members[msg.sender].premiumPaid += premiumAmount;
@@ -165,9 +200,16 @@ contract InsurancePoolFacet is IInsurancePool, AccessControl, ReentrancyGuard, P
         bytes32[] calldata evidenceHashes
     ) external nonReentrant whenNotPaused returns (bytes32 claimId) {
         InsurancePoolStorage storage ips = getInsurancePoolStorage();
-        require(ips.members[msg.sender].isActive, "InsurancePool: not a member");
+        require(
+            ips.members[msg.sender].isActive,
+            "InsurancePool: not a member"
+        );
 
-        claimId = IdGenerator.generateClaimId(msg.sender, msg.sender, keccak256(abi.encodePacked(diagnosis)));
+        claimId = IdGenerator.generateClaimId(
+            msg.sender,
+            msg.sender,
+            keccak256(abi.encodePacked(diagnosis))
+        );
 
         ips.claims[claimId] = ClaimInfo({
             claimId: claimId,
@@ -190,14 +232,26 @@ contract InsurancePoolFacet is IInsurancePool, AccessControl, ReentrancyGuard, P
     }
 
     /// @inheritdoc IInsurancePool
-    function approveClaim(bytes32 claimId, uint256 approvedAmount) external nonReentrant whenNotPaused {
-        require(hasRole(INSURER_ROLE, msg.sender), "InsurancePool: must have insurer role");
+    function approveClaim(
+        bytes32 claimId,
+        uint256 approvedAmount
+    ) external nonReentrant whenNotPaused {
+        require(
+            hasRole(INSURER_ROLE, msg.sender),
+            "InsurancePool: must have insurer role"
+        );
         InsurancePoolStorage storage ips = getInsurancePoolStorage();
         ClaimInfo storage claim = ips.claims[claimId];
 
-        require(bytes(claim.status).length > 0, "InsurancePool: claim not found");
-        require(keccak256(abi.encodePacked(claim.status)) == keccak256(abi.encodePacked("submitted")),
-                "InsurancePool: claim not submitted");
+        require(
+            bytes(claim.status).length > 0,
+            "InsurancePool: claim not found"
+        );
+        require(
+            keccak256(abi.encodePacked(claim.status)) ==
+                keccak256(abi.encodePacked("submitted")),
+            "InsurancePool: claim not submitted"
+        );
 
         claim.approvedAmount = approvedAmount;
         claim.status = "approved";
@@ -206,14 +260,26 @@ contract InsurancePoolFacet is IInsurancePool, AccessControl, ReentrancyGuard, P
     }
 
     /// @inheritdoc IInsurancePool
-    function denyClaim(bytes32 claimId, string calldata reason) external nonReentrant {
-        require(hasRole(INSURER_ROLE, msg.sender), "InsurancePool: must have insurer role");
+    function denyClaim(
+        bytes32 claimId,
+        string calldata reason
+    ) external nonReentrant {
+        require(
+            hasRole(INSURER_ROLE, msg.sender),
+            "InsurancePool: must have insurer role"
+        );
         InsurancePoolStorage storage ips = getInsurancePoolStorage();
         ClaimInfo storage claim = ips.claims[claimId];
 
-        require(bytes(claim.status).length > 0, "InsurancePool: claim not found");
-        require(keccak256(abi.encodePacked(claim.status)) == keccak256(abi.encodePacked("submitted")),
-                "InsurancePool: claim not submitted");
+        require(
+            bytes(claim.status).length > 0,
+            "InsurancePool: claim not found"
+        );
+        require(
+            keccak256(abi.encodePacked(claim.status)) ==
+                keccak256(abi.encodePacked("submitted")),
+            "InsurancePool: claim not submitted"
+        );
 
         claim.status = "denied";
 
@@ -226,15 +292,24 @@ contract InsurancePoolFacet is IInsurancePool, AccessControl, ReentrancyGuard, P
 
     /// @inheritdoc IInsurancePool
     function payClaim(bytes32 claimId) external nonReentrant whenNotPaused {
-        require(hasRole(ADMIN_ROLE, msg.sender), "InsurancePool: must have admin role");
+        require(
+            hasRole(ADMIN_ROLE, msg.sender),
+            "InsurancePool: must have admin role"
+        );
         InsurancePoolStorage storage ips = getInsurancePoolStorage();
         ClaimInfo storage claim = ips.claims[claimId];
 
-        require(keccak256(abi.encodePacked(claim.status)) == keccak256(abi.encodePacked("approved")),
-                "InsurancePool: claim not approved");
+        require(
+            keccak256(abi.encodePacked(claim.status)) ==
+                keccak256(abi.encodePacked("approved")),
+            "InsurancePool: claim not approved"
+        );
         require(claim.approvedAmount > 0, "InsurancePool: no approved amount");
         require(claim.paidAt == 0, "InsurancePool: already paid");
-        require(ips.poolInfo.totalReserves >= claim.approvedAmount, "InsurancePool: insufficient reserves");
+        require(
+            ips.poolInfo.totalReserves >= claim.approvedAmount,
+            "InsurancePool: insufficient reserves"
+        );
 
         claim.status = "paid";
         claim.paidAt = block.timestamp;
@@ -250,13 +325,17 @@ contract InsurancePoolFacet is IInsurancePool, AccessControl, ReentrancyGuard, P
     }
 
     /// @inheritdoc IInsurancePool
-    function getPoolStats() external view returns (
-        uint256 totalMembers,
-        uint256 totalReserves,
-        uint256 activeClaims,
-        uint256 reserveRatio,
-        uint256 solvencyThreshold
-    ) {
+    function getPoolStats()
+        external
+        view
+        returns (
+            uint256 totalMembers,
+            uint256 totalReserves,
+            uint256 activeClaims,
+            uint256 reserveRatio,
+            uint256 solvencyThreshold
+        )
+    {
         InsurancePoolStorage storage ips = getInsurancePoolStorage();
         PoolInfo memory pool = ips.poolInfo;
 
@@ -270,13 +349,19 @@ contract InsurancePoolFacet is IInsurancePool, AccessControl, ReentrancyGuard, P
     }
 
     /// @inheritdoc IInsurancePool
-    function getMemberInfo(address member) external view returns (
-        uint256 joinedAt,
-        uint256 coverageAmount,
-        uint256 premiumPaid,
-        uint256 lastPaymentDate,
-        bool isActive
-    ) {
+    function getMemberInfo(
+        address member
+    )
+        external
+        view
+        returns (
+            uint256 joinedAt,
+            uint256 coverageAmount,
+            uint256 premiumPaid,
+            uint256 lastPaymentDate,
+            bool isActive
+        )
+    {
         InsurancePoolStorage storage ips = getInsurancePoolStorage();
         MemberInfo memory memberInfo = ips.members[member];
 
@@ -290,16 +375,22 @@ contract InsurancePoolFacet is IInsurancePool, AccessControl, ReentrancyGuard, P
     }
 
     /// @inheritdoc IInsurancePool
-    function getClaim(bytes32 claimId) external view returns (
-        address member,
-        uint256 amount,
-        string memory diagnosis,
-        string memory treatment,
-        string memory status,
-        uint256 submittedAt,
-        uint256 approvedAmount,
-        uint256 paidAt
-    ) {
+    function getClaim(
+        bytes32 claimId
+    )
+        external
+        view
+        returns (
+            address member,
+            uint256 amount,
+            string memory diagnosis,
+            string memory treatment,
+            string memory status,
+            uint256 submittedAt,
+            uint256 approvedAmount,
+            uint256 paidAt
+        )
+    {
         InsurancePoolStorage storage ips = getInsurancePoolStorage();
         ClaimInfo memory claim = ips.claims[claimId];
 
@@ -316,23 +407,38 @@ contract InsurancePoolFacet is IInsurancePool, AccessControl, ReentrancyGuard, P
     }
 
     /// @inheritdoc IInsurancePool
-    function updatePoolParameters(uint256 newReserveRatio, uint256 newSolvencyThreshold) external nonReentrant {
-        require(hasRole(ADMIN_ROLE, msg.sender), "InsurancePool: must have admin role");
+    function updatePoolParameters(
+        uint256 newReserveRatio,
+        uint256 newSolvencyThreshold
+    ) external nonReentrant {
+        require(
+            hasRole(ADMIN_ROLE, msg.sender),
+            "InsurancePool: must have admin role"
+        );
         InsurancePoolStorage storage ips = getInsurancePoolStorage();
 
         ips.poolInfo.reserveRatio = newReserveRatio;
         ips.poolInfo.solvencyThreshold = newSolvencyThreshold;
 
-        emit PoolParametersUpdated(newReserveRatio, newSolvencyThreshold, msg.sender);
+        emit PoolParametersUpdated(
+            newReserveRatio,
+            newSolvencyThreshold,
+            msg.sender
+        );
     }
 
     /**
      * @dev Remove claim from active claims array
      */
-    function _removeFromActiveClaims(InsurancePoolStorage storage ips, bytes32 claimId) internal {
+    function _removeFromActiveClaims(
+        InsurancePoolStorage storage ips,
+        bytes32 claimId
+    ) internal {
         for (uint256 i = 0; i < ips.activeClaims.length; i++) {
             if (ips.activeClaims[i] == claimId) {
-                ips.activeClaims[i] = ips.activeClaims[ips.activeClaims.length - 1];
+                ips.activeClaims[i] = ips.activeClaims[
+                    ips.activeClaims.length - 1
+                ];
                 ips.activeClaims.pop();
                 break;
             }
@@ -343,7 +449,10 @@ contract InsurancePoolFacet is IInsurancePool, AccessControl, ReentrancyGuard, P
      * @dev Initialize insurance pool
      */
     function initializeInsurancePool() external {
-        require(hasRole(ADMIN_ROLE, msg.sender), "InsurancePool: must have admin role");
+        require(
+            hasRole(ADMIN_ROLE, msg.sender),
+            "InsurancePool: must have admin role"
+        );
         InsurancePoolStorage storage ips = getInsurancePoolStorage();
 
         ips.poolInfo = PoolInfo({

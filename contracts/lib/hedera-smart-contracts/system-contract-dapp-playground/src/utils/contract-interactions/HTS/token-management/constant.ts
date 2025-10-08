@@ -22,7 +22,7 @@ import { ethers } from 'ethers';
 import { HEDERA_SHARED_PARAM_INPUT_FIELDS } from '@/utils/common/constants';
 
 /**
- * @notice an object for the IhederaTokenService.Expiry
+ * an object for the IhederaTokenService.Expiry
  */
 export const DEFAULT_TOKEN_EXIPIRY_VALUE: IHederaTokenServiceExpiry = {
   second: 0,
@@ -31,7 +31,7 @@ export const DEFAULT_TOKEN_EXIPIRY_VALUE: IHederaTokenServiceExpiry = {
 };
 
 /**
- * @notice an object for the IHederaTokenService.HederaToken default values
+ * an object for the IHederaTokenService.HederaToken default values
  */
 export const DEFAULT_HEDERA_TOKEN_INFO_VALUE: IHederaTokenServiceHederaToken = {
   memo: '',
@@ -45,7 +45,7 @@ export const DEFAULT_HEDERA_TOKEN_INFO_VALUE: IHederaTokenServiceHederaToken = {
   expiry: DEFAULT_TOKEN_EXIPIRY_VALUE,
 };
 
-/** @notice an object holding information for the updateTokenInfo's input fields */
+/** an object holding information for the updateTokenInfo's input fields */
 export const htsUpdateTokenInfoParamFields = {
   hederaTokenAddress: {
     ...HEDERA_SHARED_PARAM_INPUT_FIELDS,
@@ -106,7 +106,7 @@ export const htsUpdateTokenInfoParamFields = {
   },
 };
 
-/** @notice an object holding information for the updateTokenExpiry's input fields */
+/** an object holding information for the updateTokenExpiry's input fields */
 export const htsUpdateTokenExpiryParamFields = {
   hederaTokenAddress: {
     ...HEDERA_SHARED_PARAM_INPUT_FIELDS,
@@ -140,7 +140,7 @@ export const htsUpdateTokenExpiryParamFields = {
   },
 };
 
-/** @notice an object holding information for the tokenPermission's input fields */
+/** an object holding information for the tokenPermission's input fields */
 export const htsTokenPermissionParamFields = {
   hederaTokenAddress: {
     ...HEDERA_SHARED_PARAM_INPUT_FIELDS,
@@ -179,7 +179,7 @@ export const htsTokenPermissionParamFields = {
   },
 };
 
-/** @notice an object holding information for the tokenStatus's input fields */
+/** an object holding information for the tokenStatus's input fields */
 export const htsTokenStatusParamFields = {
   hederaTokenAddress: {
     ...HEDERA_SHARED_PARAM_INPUT_FIELDS,
@@ -190,7 +190,7 @@ export const htsTokenStatusParamFields = {
   },
 };
 
-/** @notice an object holding information for the tokenRelation's input fields */
+/** an object holding information for the tokenRelation's input fields */
 export const htsTokenRelationParamFields = {
   hederaTokenAddress: {
     ...HEDERA_SHARED_PARAM_INPUT_FIELDS,
@@ -215,7 +215,7 @@ export const htsTokenRelationParamFields = {
   },
 };
 
-/** @notice an object holding information for the tokenDeduction's input fields */
+/** an object holding information for the tokenDeduction's input fields */
 export const htsTokenDeductionParamFields = {
   hederaTokenAddress: {
     ...HEDERA_SHARED_PARAM_INPUT_FIELDS,

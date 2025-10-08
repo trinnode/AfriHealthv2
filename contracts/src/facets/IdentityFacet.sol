@@ -14,7 +14,7 @@ import "../utils/Pausable.sol";
 contract IdentityFacet is IIdentity, AccessControl, ReentrancyGuard, Pausable {
     using DiamondStorage for DiamondStorage.DiamondStorageStruct;
 
-    /// @notice Storage structure for identity data
+    /// Storage structure for identity data
     struct IdentityStorage {
         mapping(address => IdentityInfo) identities;
         mapping(address => ProviderInfo) providers;
@@ -24,7 +24,7 @@ contract IdentityFacet is IIdentity, AccessControl, ReentrancyGuard, Pausable {
         mapping(string => address[]) providersBySpecialty;
     }
 
-    /// @notice Identity information structure
+    /// Identity information structure
     struct IdentityInfo {
         string identityType;
         bytes32 identityHash;
@@ -32,7 +32,7 @@ contract IdentityFacet is IIdentity, AccessControl, ReentrancyGuard, Pausable {
         uint256 registeredAt;
     }
 
-    /// @notice Provider information structure
+    /// Provider information structure
     struct ProviderInfo {
         string licenseNumber;
         string specialty;
@@ -41,14 +41,18 @@ contract IdentityFacet is IIdentity, AccessControl, ReentrancyGuard, Pausable {
         uint256 verifiedAt;
     }
 
-    /// @notice Storage position for identity data
+    /// Storage position for identity data
     bytes32 constant IDENTITY_STORAGE_POSITION =
         keccak256("diamond.identity.storage");
 
     /**
      * @dev Get identity storage
      */
-    function getIdentityStorage() internal pure returns (IdentityStorage storage ids) {
+    function getIdentityStorage()
+        internal
+        pure
+        returns (IdentityStorage storage ids)
+    {
         bytes32 position = IDENTITY_STORAGE_POSITION;
         assembly {
             ids.slot := position
@@ -73,7 +77,12 @@ contract IdentityFacet is IIdentity, AccessControl, ReentrancyGuard, Pausable {
         // Add to accounts by type mapping
         ids.accountsByType[identityType].push(msg.sender);
 
-        emit IdentityRegistered(msg.sender, identityType, identityData, msg.sender);
+        emit IdentityRegistered(
+            msg.sender,
+            identityType,
+            identityData,
+            msg.sender
+        );
     }
 
     /// @inheritdoc IIdentity
@@ -103,7 +112,10 @@ contract IdentityFacet is IIdentity, AccessControl, ReentrancyGuard, Pausable {
     }
 
     /// @inheritdoc IIdentity
-    function revokeProviderVerification(address provider, string calldata reason) external onlyAdmin nonReentrant {
+    function revokeProviderVerification(
+        address provider,
+        string calldata reason
+    ) external onlyAdmin nonReentrant {
         IdentityStorage storage ids = getIdentityStorage();
 
         if (ids.providers[provider].isVerified) {
@@ -114,7 +126,10 @@ contract IdentityFacet is IIdentity, AccessControl, ReentrancyGuard, Pausable {
     }
 
     /// @inheritdoc IIdentity
-    function updateKYCStatus(address account, bool status) external onlyAdmin nonReentrant {
+    function updateKYCStatus(
+        address account,
+        bool status
+    ) external onlyAdmin nonReentrant {
         IdentityStorage storage ids = getIdentityStorage();
         ids.kycStatuses[account] = status;
         emit KYCStatusUpdated(account, status, msg.sender);
@@ -128,25 +143,42 @@ contract IdentityFacet is IIdentity, AccessControl, ReentrancyGuard, Pausable {
     }
 
     /// @inheritdoc IIdentity
-    function getIdentity(address account) external view returns (
-        string memory identityType,
-        bytes32 identityHash,
-        string memory metadata,
-        uint256 registeredAt
-    ) {
+    function getIdentity(
+        address account
+    )
+        external
+        view
+        returns (
+            string memory identityType,
+            bytes32 identityHash,
+            string memory metadata,
+            uint256 registeredAt
+        )
+    {
         IdentityStorage storage ids = getIdentityStorage();
         IdentityInfo memory identity = ids.identities[account];
-        return (identity.identityType, identity.identityHash, identity.metadata, identity.registeredAt);
+        return (
+            identity.identityType,
+            identity.identityHash,
+            identity.metadata,
+            identity.registeredAt
+        );
     }
 
     /// @inheritdoc IIdentity
-    function getProviderInfo(address provider) external view returns (
-        string memory licenseNumber,
-        string memory specialty,
-        bytes32 verificationData,
-        bool isVerified,
-        uint256 verifiedAt
-    ) {
+    function getProviderInfo(
+        address provider
+    )
+        external
+        view
+        returns (
+            string memory licenseNumber,
+            string memory specialty,
+            bytes32 verificationData,
+            bool isVerified,
+            uint256 verifiedAt
+        )
+    {
         IdentityStorage storage ids = getIdentityStorage();
         ProviderInfo memory providerInfo = ids.providers[provider];
         return (
@@ -177,7 +209,10 @@ contract IdentityFacet is IIdentity, AccessControl, ReentrancyGuard, Pausable {
     }
 
     /// @inheritdoc IIdentity
-    function getAccountsByType(string calldata identityType, uint256 limit) external view returns (address[] memory accounts) {
+    function getAccountsByType(
+        string calldata identityType,
+        uint256 limit
+    ) external view returns (address[] memory accounts) {
         IdentityStorage storage ids = getIdentityStorage();
         address[] memory allAccounts = ids.accountsByType[identityType];
         if (limit == 0 || limit >= allAccounts.length) {
@@ -190,7 +225,9 @@ contract IdentityFacet is IIdentity, AccessControl, ReentrancyGuard, Pausable {
     }
 
     /// @inheritdoc IIdentity
-    function getProvidersBySpecialty(string calldata specialty) external view returns (address[] memory providers) {
+    function getProvidersBySpecialty(
+        string calldata specialty
+    ) external view returns (address[] memory providers) {
         IdentityStorage storage ids = getIdentityStorage();
         return ids.providersBySpecialty[specialty];
     }
@@ -205,7 +242,10 @@ contract IdentityFacet is IIdentity, AccessControl, ReentrancyGuard, Pausable {
 
         // Remove from old type mapping if type changed
         if (bytes(ids.identities[msg.sender].identityType).length > 0) {
-            _removeFromTypeMapping(msg.sender, ids.identities[msg.sender].identityType);
+            _removeFromTypeMapping(
+                msg.sender,
+                ids.identities[msg.sender].identityType
+            );
         }
 
         // Update identity
@@ -219,7 +259,12 @@ contract IdentityFacet is IIdentity, AccessControl, ReentrancyGuard, Pausable {
         // Add to new type mapping
         ids.accountsByType[identityType].push(msg.sender);
 
-        emit IdentityRegistered(msg.sender, identityType, identityData, msg.sender);
+        emit IdentityRegistered(
+            msg.sender,
+            identityType,
+            identityData,
+            msg.sender
+        );
     }
 
     /**
@@ -227,7 +272,10 @@ contract IdentityFacet is IIdentity, AccessControl, ReentrancyGuard, Pausable {
      * @param account Account to remove
      * @param identityType Type to remove from
      */
-    function _removeFromTypeMapping(address account, string memory identityType) internal {
+    function _removeFromTypeMapping(
+        address account,
+        string memory identityType
+    ) internal {
         IdentityStorage storage ids = getIdentityStorage();
         address[] storage accounts = ids.accountsByType[identityType];
 

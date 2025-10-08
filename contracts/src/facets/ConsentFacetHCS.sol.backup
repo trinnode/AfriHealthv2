@@ -11,12 +11,12 @@ import "../utils/IdGenerator.sol";
 /**
  * @title ConsentFacetHCS
  * @dev Facet for patient consent management with HCS event emission
- * @notice All consent lifecycle events are emitted for HCS topic logging
+ * All consent lifecycle events are emitted for HCS topic logging
  */
 contract ConsentFacetHCS is IConsent, AccessControl, ReentrancyGuard, Pausable {
     using DiamondStorage for DiamondStorage.DiamondStorageStruct;
 
-    /// @notice Storage structure for consent data
+    /// Storage structure for consent data
     struct ConsentStorage {
         mapping(bytes32 => ConsentRequest) consentRequests;
         mapping(address => bytes32[]) patientConsents;
@@ -26,7 +26,7 @@ contract ConsentFacetHCS is IConsent, AccessControl, ReentrancyGuard, Pausable {
         bytes32 hcsTopicId; // HCS Topic for consent events
     }
 
-    /// @notice Consent request structure
+    /// Consent request structure
     struct ConsentRequest {
         bytes32 consentId;
         address patient;
@@ -41,11 +41,11 @@ contract ConsentFacetHCS is IConsent, AccessControl, ReentrancyGuard, Pausable {
         uint256 createdAt;
     }
 
-    /// @notice Storage position for consent data
+    /// Storage position for consent data
     bytes32 constant CONSENT_STORAGE_POSITION =
         keccak256("diamond.consent.storage");
 
-    /// @notice HCS message event for off-chain topic submission
+    /// HCS message event for off-chain topic submission
     event HCSConsentMessage(
         bytes32 indexed topicId,
         string eventType,
@@ -71,7 +71,7 @@ contract ConsentFacetHCS is IConsent, AccessControl, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @notice Set HCS Topic ID for consent events
+     * Set HCS Topic ID for consent events
      * @param topicId The HCS topic ID as bytes32
      */
     function setConsentHCSTopicId(bytes32 topicId) external {
@@ -288,7 +288,7 @@ contract ConsentFacetHCS is IConsent, AccessControl, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @notice Get all consent IDs for a patient
+     * Get all consent IDs for a patient
      */
     function getPatientConsents(
         address patient
@@ -297,7 +297,7 @@ contract ConsentFacetHCS is IConsent, AccessControl, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @notice Get all consent IDs requested by a provider
+     * Get all consent IDs requested by a provider
      */
     function getProviderConsents(
         address provider
@@ -306,7 +306,7 @@ contract ConsentFacetHCS is IConsent, AccessControl, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @notice Get active consent ID for specific patient, provider, and scope
+     * Get active consent ID for specific patient, provider, and scope
      */
     function getActiveConsentId(
         address patient,
@@ -317,7 +317,7 @@ contract ConsentFacetHCS is IConsent, AccessControl, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @notice Check if consent is expired
+     * Check if consent is expired
      */
     function isConsentExpired(bytes32 consentId) external view returns (bool) {
         ConsentRequest storage request = getConsentStorage().consentRequests[
@@ -327,7 +327,7 @@ contract ConsentFacetHCS is IConsent, AccessControl, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @notice Check if consent is revoked
+     * Check if consent is revoked
      */
     function isConsentRevoked(bytes32 consentId) external view returns (bool) {
         return getConsentStorage().consentRequests[consentId].isRevoked;
@@ -369,7 +369,7 @@ contract ConsentFacetHCS is IConsent, AccessControl, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @notice Batch cleanup of expired consents
+     * Batch cleanup of expired consents
      * @param limit Maximum number of consents to clean
      */
     function cleanupExpiredConsents(uint256 limit) external nonReentrant {
@@ -384,7 +384,7 @@ contract ConsentFacetHCS is IConsent, AccessControl, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @notice Get HCS Topic ID
+     * Get HCS Topic ID
      */
     function getConsentHCSTopicId() external view returns (bytes32) {
         return getConsentStorage().hcsTopicId;

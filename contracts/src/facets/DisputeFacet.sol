@@ -15,16 +15,17 @@ import "../utils/IdGenerator.sol";
 contract DisputeFacet is IDispute, AccessControl, ReentrancyGuard, Pausable {
     using DiamondStorage for DiamondStorage.DiamondStorageStruct;
 
-    /// @notice Storage structure for dispute data
+    /// Storage structure for dispute data
     struct DisputeStorage {
         mapping(bytes32 => DisputeInfo) disputes;
         mapping(bytes32 => DisputeEvidence[]) disputeEvidence;
         mapping(address => bytes32[]) accountDisputes;
         mapping(bytes32 => uint256) disputeDeadlines;
+        mapping(bytes32 => bytes32[]) invoiceDisputes;
         bytes32[] activeDisputes;
     }
 
-    /// @notice Dispute information structure
+    /// Dispute information structure
     struct DisputeInfo {
         bytes32 disputeId;
         bytes32 invoiceId;
@@ -38,7 +39,7 @@ contract DisputeFacet is IDispute, AccessControl, ReentrancyGuard, Pausable {
         string resolution;
     }
 
-    /// @notice Dispute evidence structure
+    /// Dispute evidence structure
     struct DisputeEvidence {
         bytes32 evidenceHash;
         string evidenceType;
@@ -46,14 +47,18 @@ contract DisputeFacet is IDispute, AccessControl, ReentrancyGuard, Pausable {
         uint256 submittedAt;
     }
 
-    /// @notice Storage position for dispute data
+    /// Storage position for dispute data
     bytes32 constant DISPUTE_STORAGE_POSITION =
         keccak256("diamond.dispute.storage");
 
     /**
      * @dev Get dispute storage
      */
-    function getDisputeStorage() internal pure returns (DisputeStorage storage ds) {
+    function getDisputeStorage()
+        internal
+        pure
+        returns (DisputeStorage storage ds)
+    {
         bytes32 position = DISPUTE_STORAGE_POSITION;
         assembly {
             ds.slot := position
@@ -68,7 +73,11 @@ contract DisputeFacet is IDispute, AccessControl, ReentrancyGuard, Pausable {
     ) external nonReentrant whenNotPaused returns (bytes32 disputeId) {
         DisputeStorage storage ds = getDisputeStorage();
 
-        disputeId = IdGenerator.generateDisputeId(invoiceId, msg.sender, keccak256(abi.encodePacked(reason)));
+        disputeId = IdGenerator.generateDisputeId(
+            invoiceId,
+            msg.sender,
+            keccak256(abi.encodePacked(reason))
+        );
 
         ds.disputes[disputeId] = DisputeInfo({
             disputeId: disputeId,
@@ -86,21 +95,30 @@ contract DisputeFacet is IDispute, AccessControl, ReentrancyGuard, Pausable {
         // Add to mappings
         ds.accountDisputes[msg.sender].push(disputeId);
         ds.activeDisputes.push(disputeId);
+        ds.invoiceDisputes[invoiceId].push(disputeId);
 
         // Set deadline (14 days for dispute resolution)
         ds.disputeDeadlines[disputeId] = block.timestamp + 14 days;
 
         // Add initial evidence
         for (uint256 i = 0; i < evidenceHashes.length; i++) {
-            ds.disputeEvidence[disputeId].push(DisputeEvidence({
-                evidenceHash: evidenceHashes[i],
-                evidenceType: "initial_evidence",
-                submittedBy: msg.sender,
-                submittedAt: block.timestamp
-            }));
+            ds.disputeEvidence[disputeId].push(
+                DisputeEvidence({
+                    evidenceHash: evidenceHashes[i],
+                    evidenceType: "initial_evidence",
+                    submittedBy: msg.sender,
+                    submittedAt: block.timestamp
+                })
+            );
         }
 
-        emit DisputeCreated(disputeId, invoiceId, msg.sender, reason, block.timestamp);
+        emit DisputeCreated(
+            disputeId,
+            invoiceId,
+            msg.sender,
+            reason,
+            block.timestamp
+        );
     }
 
     /// @inheritdoc IDispute
@@ -111,29 +129,52 @@ contract DisputeFacet is IDispute, AccessControl, ReentrancyGuard, Pausable {
         string calldata description
     ) external nonReentrant {
         DisputeStorage storage ds = getDisputeStorage();
-        require(bytes(ds.disputes[disputeId].status).length > 0, "Dispute: dispute not found");
-        require(keccak256(abi.encodePacked(ds.disputes[disputeId].status)) == keccak256(abi.encodePacked("active")),
-                "Dispute: dispute not active");
+        require(
+            bytes(ds.disputes[disputeId].status).length > 0,
+            "Dispute: dispute not found"
+        );
+        require(
+            keccak256(abi.encodePacked(ds.disputes[disputeId].status)) ==
+                keccak256(abi.encodePacked("active")),
+            "Dispute: dispute not active"
+        );
 
-        ds.disputeEvidence[disputeId].push(DisputeEvidence({
-            evidenceHash: evidenceHash,
-            evidenceType: evidenceType,
-            submittedBy: msg.sender,
-            submittedAt: block.timestamp
-        }));
+        ds.disputeEvidence[disputeId].push(
+            DisputeEvidence({
+                evidenceHash: evidenceHash,
+                evidenceType: evidenceType,
+                submittedBy: msg.sender,
+                submittedAt: block.timestamp
+            })
+        );
 
-        emit EvidenceSubmitted(disputeId, msg.sender, evidenceType, evidenceHash, block.timestamp);
+        emit EvidenceSubmitted(
+            disputeId,
+            msg.sender,
+            evidenceType,
+            evidenceHash,
+            block.timestamp
+        );
     }
 
     /// @inheritdoc IDispute
-    function assignArbitrator(bytes32 disputeId, address arbitrator) external onlyAdmin nonReentrant {
+    function assignArbitrator(
+        bytes32 disputeId,
+        address arbitrator
+    ) external onlyAdmin nonReentrant {
         DisputeStorage storage ds = getDisputeStorage();
         DisputeInfo storage dispute = ds.disputes[disputeId];
 
         require(bytes(dispute.status).length > 0, "Dispute: dispute not found");
-        require(keccak256(abi.encodePacked(dispute.status)) == keccak256(abi.encodePacked("active")),
-                "Dispute: dispute not active");
-        require(hasRole(ARBITRATOR_ROLE, arbitrator), "Dispute: not an arbitrator");
+        require(
+            keccak256(abi.encodePacked(dispute.status)) ==
+                keccak256(abi.encodePacked("active")),
+            "Dispute: dispute not active"
+        );
+        require(
+            hasRole(ARBITRATOR_ROLE, arbitrator),
+            "Dispute: not an arbitrator"
+        );
 
         dispute.arbitrator = arbitrator;
 
@@ -150,9 +191,15 @@ contract DisputeFacet is IDispute, AccessControl, ReentrancyGuard, Pausable {
         DisputeInfo storage dispute = ds.disputes[disputeId];
 
         require(bytes(dispute.status).length > 0, "Dispute: dispute not found");
-        require(keccak256(abi.encodePacked(dispute.status)) == keccak256(abi.encodePacked("active")),
-                "Dispute: dispute not active");
-        require(dispute.arbitrator == msg.sender, "Dispute: not assigned arbitrator");
+        require(
+            keccak256(abi.encodePacked(dispute.status)) ==
+                keccak256(abi.encodePacked("active")),
+            "Dispute: dispute not active"
+        );
+        require(
+            dispute.arbitrator == msg.sender,
+            "Dispute: not assigned arbitrator"
+        );
 
         dispute.status = "resolved";
         dispute.resolution = resolution;
@@ -162,20 +209,32 @@ contract DisputeFacet is IDispute, AccessControl, ReentrancyGuard, Pausable {
         // Remove from active disputes
         _removeFromActiveDisputes(ds, disputeId);
 
-        emit DisputeResolved(disputeId, msg.sender, resolution, resolutionAmount, block.timestamp);
+        emit DisputeResolved(
+            disputeId,
+            msg.sender,
+            resolution,
+            resolutionAmount,
+            block.timestamp
+        );
     }
 
     /// @inheritdoc IDispute
-    function getDispute(bytes32 disputeId) external view returns (
-        bytes32 invoiceId,
-        address complainant,
-        string memory reason,
-        string memory status,
-        address arbitrator,
-        uint256 createdAt,
-        uint256 resolvedAt,
-        uint256 resolutionAmount
-    ) {
+    function getDispute(
+        bytes32 disputeId
+    )
+        external
+        view
+        returns (
+            bytes32 invoiceId,
+            address complainant,
+            string memory reason,
+            string memory status,
+            address arbitrator,
+            uint256 createdAt,
+            uint256 resolvedAt,
+            uint256 resolutionAmount
+        )
+    {
         DisputeStorage storage ds = getDisputeStorage();
         DisputeInfo memory dispute = ds.disputes[disputeId];
 
@@ -192,13 +251,19 @@ contract DisputeFacet is IDispute, AccessControl, ReentrancyGuard, Pausable {
     }
 
     /// @inheritdoc IDispute
-    function getDisputeEvidence(bytes32 disputeId) external view returns (
-        address[] memory submitters,
-        string[] memory evidenceTypes,
-        bytes32[] memory evidenceHashes,
-        string[] memory descriptions,
-        uint256[] memory submittedAts
-    ) {
+    function getDisputeEvidence(
+        bytes32 disputeId
+    )
+        external
+        view
+        returns (
+            address[] memory submitters,
+            string[] memory evidenceTypes,
+            bytes32[] memory evidenceHashes,
+            string[] memory descriptions,
+            uint256[] memory submittedAts
+        )
+    {
         DisputeStorage storage ds = getDisputeStorage();
         DisputeEvidence[] memory evidence = ds.disputeEvidence[disputeId];
 
@@ -219,22 +284,25 @@ contract DisputeFacet is IDispute, AccessControl, ReentrancyGuard, Pausable {
     }
 
     /// @inheritdoc IDispute
-    function isDisputePeriodEnded(bytes32 disputeId) external view returns (bool) {
+    function isDisputePeriodEnded(
+        bytes32 disputeId
+    ) external view returns (bool) {
         DisputeStorage storage ds = getDisputeStorage();
         return block.timestamp > ds.disputeDeadlines[disputeId];
     }
 
     /// @inheritdoc IDispute
-    function getInvoiceDisputes(bytes32 invoiceId) external view returns (bytes32[] memory disputeIds) {
+    function getInvoiceDisputes(
+        bytes32 invoiceId
+    ) external view returns (bytes32[] memory disputeIds) {
         DisputeStorage storage ds = getDisputeStorage();
-
-        // This would need to be implemented with proper invoice-dispute mapping
-        // For now, return empty array
-        return new bytes32[](0);
+        return ds.invoiceDisputes[invoiceId];
     }
 
     /// @inheritdoc IDispute
-    function getActiveDisputes(address account) external view returns (bytes32[] memory disputeIds) {
+    function getActiveDisputes(
+        address account
+    ) external view returns (bytes32[] memory disputeIds) {
         DisputeStorage storage ds = getDisputeStorage();
         bytes32[] memory accountDisputeIds = ds.accountDisputes[account];
 
@@ -242,7 +310,11 @@ contract DisputeFacet is IDispute, AccessControl, ReentrancyGuard, Pausable {
         bytes32[] memory active = new bytes32[](accountDisputeIds.length);
 
         for (uint256 i = 0; i < accountDisputeIds.length; i++) {
-            if (keccak256(abi.encodePacked(ds.disputes[accountDisputeIds[i]].status)) == keccak256(abi.encodePacked("active"))) {
+            if (
+                keccak256(
+                    abi.encodePacked(ds.disputes[accountDisputeIds[i]].status)
+                ) == keccak256(abi.encodePacked("active"))
+            ) {
                 active[count] = accountDisputeIds[i];
                 count++;
             }
@@ -260,10 +332,15 @@ contract DisputeFacet is IDispute, AccessControl, ReentrancyGuard, Pausable {
     /**
      * @dev Remove dispute from active disputes array
      */
-    function _removeFromActiveDisputes(DisputeStorage storage ds, bytes32 disputeId) internal {
+    function _removeFromActiveDisputes(
+        DisputeStorage storage ds,
+        bytes32 disputeId
+    ) internal {
         for (uint256 i = 0; i < ds.activeDisputes.length; i++) {
             if (ds.activeDisputes[i] == disputeId) {
-                ds.activeDisputes[i] = ds.activeDisputes[ds.activeDisputes.length - 1];
+                ds.activeDisputes[i] = ds.activeDisputes[
+                    ds.activeDisputes.length - 1
+                ];
                 ds.activeDisputes.pop();
                 break;
             }

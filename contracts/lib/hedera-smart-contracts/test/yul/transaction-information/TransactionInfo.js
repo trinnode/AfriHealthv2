@@ -116,7 +116,7 @@ describe('@yulequiv TransactionInfo Test Suite', () => {
       .encodeFunctionData(functionSig, [index])
       .replace('0x', '');
 
-    // @notice since transactionInfoContract.getCallDataLoad() returns the msg.calldata from memory offset `index`,
+    // since transactionInfoContract.getCallDataLoad() returns the msg.calldata from memory offset `index`,
     //         `bytes32CallData` also needs to dynamically truncate itself based on `index`
     const expectedBytes32CallData =
       `0x` + callData.slice(index * 2, 64 + index * 2);

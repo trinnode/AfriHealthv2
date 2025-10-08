@@ -23,7 +23,7 @@ import Cookies from 'js-cookie';
 /**
  * @dev store the connected accounts array and network info to client cookies
  *
- * @notice for logging in purpose
+ * for logging in purpose
  *
  * @params accounts string[]
  *

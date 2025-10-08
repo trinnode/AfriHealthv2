@@ -24,7 +24,7 @@ import dappMetadata from '@/utils/common/metadata';
 import ChakraUIProviders from '@/libs/chakra/provider';
 import BgGradient from '@/components/background-gradients';
 
-/** @notice Root Layout */
+/** Root Layout */
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${StyreneAWebFont.variable}`}>
@@ -40,5 +40,5 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   );
 }
 
-/** @notice export metadata for SEO */
+/** export metadata for SEO */
 export const metadata = dappMetadata;

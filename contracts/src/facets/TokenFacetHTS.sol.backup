@@ -13,7 +13,7 @@ import "hedera-smart-contracts/system-contracts/HederaResponseCodes.sol";
 /**
  * @title TokenFacetHTS
  * @dev Facet for Hedera Token Service (HTS) integration
- * @notice Uses HTS precompiled contracts for native token operations on Hedera
+ * Uses HTS precompiled contracts for native token operations on Hedera
  */
 contract TokenFacetHTS is
     IToken,
@@ -22,7 +22,7 @@ contract TokenFacetHTS is
     Pausable,
     HederaTokenService
 {
-    /// @notice Storage structure for token data
+    /// Storage structure for token data
     struct TokenStorage {
         address platformCreditToken;
         address insurancePoolToken;
@@ -33,11 +33,11 @@ contract TokenFacetHTS is
         bool tokensCreated;
     }
 
-    /// @notice Storage position for token data
+    /// Storage position for token data
     bytes32 constant TOKEN_STORAGE_POSITION =
         keccak256("diamond.token.storage");
 
-    /// @notice HCS Topic IDs for token events
+    /// HCS Topic IDs for token events
     bytes32 constant TOKEN_EVENTS_TOPIC = keccak256("afrihealth.token.events");
 
     /**
@@ -75,7 +75,7 @@ contract TokenFacetHTS is
     }
 
     /**
-     * @notice Create Platform Credit token using HTS
+     * Create Platform Credit token using HTS
      * @return tokenAddress The address of the created token
      */
     function createPlatformCreditToken()
@@ -133,7 +133,7 @@ contract TokenFacetHTS is
     }
 
     /**
-     * @notice Create Insurance Pool token using HTS
+     * Create Insurance Pool token using HTS
      * @return tokenAddress The address of the created token
      */
     function createInsurancePoolToken()
@@ -358,7 +358,7 @@ contract TokenFacetHTS is
     }
 
     /**
-     * @notice Associate a token with an account using HTS
+     * Associate a token with an account using HTS
      * @param account The account to associate
      * @param token The token address to associate
      */
@@ -385,7 +385,7 @@ contract TokenFacetHTS is
     }
 
     /**
-     * @notice Dissociate a token from an account using HTS
+     * Dissociate a token from an account using HTS
      * @param account The account to dissociate
      * @param token The token address to dissociate
      */
@@ -411,21 +411,21 @@ contract TokenFacetHTS is
     }
 
     /**
-     * @notice Get Platform Credit token address
+     * Get Platform Credit token address
      */
     function getPlatformCreditToken() external view returns (address) {
         return getTokenStorage().platformCreditToken;
     }
 
     /**
-     * @notice Get Insurance Pool token address
+     * Get Insurance Pool token address
      */
     function getInsurancePoolToken() external view returns (address) {
         return getTokenStorage().insurancePoolToken;
     }
 
     /**
-     * @notice Check if account has token associated
+     * Check if account has token associated
      */
     function isTokenAssociated(
         address account,
@@ -435,7 +435,7 @@ contract TokenFacetHTS is
     }
 
     /**
-     * @notice Get all associated tokens for an account
+     * Get all associated tokens for an account
      */
     function getAssociatedTokens(
         address account
@@ -444,7 +444,7 @@ contract TokenFacetHTS is
     }
 
     /**
-     * @notice Get token balance using HTS
+     * Get token balance using HTS
      */
     function getTokenBalance(
         address token,
@@ -462,7 +462,7 @@ contract TokenFacetHTS is
     }
 
     /**
-     * @notice Helper function to create a single key structure
+     * Helper function to create a single key structure
      */
     function getSingleKey(
         KeyType keyType,

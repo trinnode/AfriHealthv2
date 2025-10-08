@@ -25,7 +25,7 @@ import { handleEstimateGas } from '@/utils/common/helpers';
 /**
  * @dev get token information
  *
- * @notice execute name(), symbol(), totalSupply(), decimals()
+ * execute name(), symbol(), totalSupply(), decimals()
  *
  * @param baseContract: Contract
  *

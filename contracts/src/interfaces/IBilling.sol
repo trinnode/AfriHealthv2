@@ -6,7 +6,7 @@ pragma solidity ^0.8.20;
  * @dev Interface for billing and payment management in AfriHealth Ledger
  */
 interface IBilling {
-    /// @notice Emitted when an invoice is created
+    /// Emitted when an invoice is created
     event InvoiceCreated(
         bytes32 indexed invoiceId,
         address indexed patient,
@@ -17,14 +17,14 @@ interface IBilling {
         uint256 dueDate
     );
 
-    /// @notice Emitted when an invoice is approved
+    /// Emitted when an invoice is approved
     event InvoiceApproved(
         bytes32 indexed invoiceId,
         address indexed approvedBy,
         uint256 approvedAt
     );
 
-    /// @notice Emitted when an invoice is rejected
+    /// Emitted when an invoice is rejected
     event InvoiceRejected(
         bytes32 indexed invoiceId,
         address indexed rejectedBy,
@@ -32,7 +32,7 @@ interface IBilling {
         uint256 rejectedAt
     );
 
-    /// @notice Emitted when payment is processed
+    /// Emitted when payment is processed
     event PaymentProcessed(
         bytes32 indexed invoiceId,
         address indexed paidBy,
@@ -41,7 +41,7 @@ interface IBilling {
         uint256 paidAt
     );
 
-    /// @notice Emitted when an invoice is disputed
+    /// Emitted when an invoice is disputed
     event InvoiceDisputed(
         bytes32 indexed invoiceId,
         address indexed disputedBy,
@@ -49,10 +49,10 @@ interface IBilling {
         uint256 disputedAt
     );
 
-    /// @notice Emitted when a currency is added
+    /// Emitted when a currency is added
     event CurrencyAdded(string currency, address indexed addedBy);
 
-    /// @notice Create a new invoice
+    /// Create a new invoice
     /// @param patient The patient's address
     /// @param amount The invoice amount
     /// @param currency The currency code (e.g., "USD", "HBAR", "AHL")
@@ -69,25 +69,25 @@ interface IBilling {
         string calldata description
     ) external returns (bytes32 invoiceId);
 
-    /// @notice Approve an invoice for payment
+    /// Approve an invoice for payment
     /// @param invoiceId The invoice identifier
     function approveInvoice(bytes32 invoiceId) external;
 
-    /// @notice Reject an invoice
+    /// Reject an invoice
     /// @param invoiceId The invoice identifier
     /// @param reason Reason for rejection
     function rejectInvoice(bytes32 invoiceId, string calldata reason) external;
 
-    /// @notice Process payment for an approved invoice
+    /// Process payment for an approved invoice
     /// @param invoiceId The invoice identifier
     function processPayment(bytes32 invoiceId) external;
 
-    /// @notice Dispute an invoice
+    /// Dispute an invoice
     /// @param invoiceId The invoice identifier
     /// @param reason Reason for dispute
     function disputeInvoice(bytes32 invoiceId, string calldata reason) external;
 
-    /// @notice Get invoice details
+    /// Get invoice details
     /// @param invoiceId The invoice identifier
     /// @return patient The patient's address
     /// @return provider The provider's address
@@ -99,52 +99,68 @@ interface IBilling {
     /// @return status Current status of the invoice
     /// @return createdAt When the invoice was created
     /// @return approvedAt When the invoice was approved (if applicable)
-    function getInvoice(bytes32 invoiceId) external view returns (
-        address patient,
-        address provider,
-        uint256 amount,
-        string memory currency,
-        string[] memory itemCodes,
-        uint256 dueDate,
-        string memory description,
-        string memory status,
-        uint256 createdAt,
-        uint256 approvedAt
-    );
+    function getInvoice(
+        bytes32 invoiceId
+    )
+        external
+        view
+        returns (
+            address patient,
+            address provider,
+            uint256 amount,
+            string memory currency,
+            string[] memory itemCodes,
+            uint256 dueDate,
+            string memory description,
+            string memory status,
+            uint256 createdAt,
+            uint256 approvedAt
+        );
 
-    /// @notice Get all invoices for a patient
+    /// Get all invoices for a patient
     /// @param patient The patient's address
     /// @return invoiceIds Array of invoice identifiers
-    function getPatientInvoices(address patient) external view returns (bytes32[] memory invoiceIds);
+    function getPatientInvoices(
+        address patient
+    ) external view returns (bytes32[] memory invoiceIds);
 
-    /// @notice Get all invoices for a provider
+    /// Get all invoices for a provider
     /// @param provider The provider's address
     /// @return invoiceIds Array of invoice identifiers
-    function getProviderInvoices(address provider) external view returns (bytes32[] memory invoiceIds);
+    function getProviderInvoices(
+        address provider
+    ) external view returns (bytes32[] memory invoiceIds);
 
-    /// @notice Get payment details for an invoice
+    /// Get payment details for an invoice
     /// @param invoiceId The invoice identifier
     /// @return amount The payment amount
     /// @return currency The payment currency
     /// @return paidAt When the payment was made
     /// @return transactionHash The blockchain transaction hash
-    function getPayment(bytes32 invoiceId) external view returns (
-        uint256 amount,
-        string memory currency,
-        uint256 paidAt,
-        bytes32 transactionHash
-    );
+    function getPayment(
+        bytes32 invoiceId
+    )
+        external
+        view
+        returns (
+            uint256 amount,
+            string memory currency,
+            uint256 paidAt,
+            bytes32 transactionHash
+        );
 
-    /// @notice Add a supported currency
+    /// Add a supported currency
     /// @param currency The currency code to add
     function addSupportedCurrency(string calldata currency) external;
 
-    /// @notice Get all supported currencies
+    /// Get all supported currencies
     /// @return Array of supported currency codes
     function getSupportedCurrencies() external view returns (string[] memory);
 
-    /// @notice Check if a currency is supported
+    /// Check if a currency is supported
     /// @param currency The currency code to check
     /// @return True if currency is supported
-    function isCurrencySupported(string calldata currency) external view returns (bool);
+    function isCurrencySupported(
+        string calldata currency
+    ) external view returns (bool);
 }

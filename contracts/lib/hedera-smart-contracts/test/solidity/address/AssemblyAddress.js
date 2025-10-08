@@ -41,8 +41,8 @@ describe('@solidityequiv1 AssemblyAddress Tests', () => {
       await assemblyAddressContract.getAddress()
     );
 
-    // @notice Remove the '0x' prefix from the expected contract bytecode, then calculate the length in bytes
-    // @notice Since each hexadeimal character represents 4 bits, and each byte is represented by 2 hexadecimal characters.
+    // Remove the '0x' prefix from the expected contract bytecode, then calculate the length in bytes
+    // Since each hexadeimal character represents 4 bits, and each byte is represented by 2 hexadecimal characters.
     //         Therefore, the length of bytecode in bytes is half of the length of the bytecode in hexadecimal characters.
     const expectedContractCodeSize =
       expectedContractBytecode.replace('0x', '').length / 2;

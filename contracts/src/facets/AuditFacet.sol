@@ -14,7 +14,7 @@ import "../utils/Pausable.sol";
 contract AuditFacet is IAudit, AccessControl, ReentrancyGuard, Pausable {
     using DiamondStorage for DiamondStorage.DiamondStorageStruct;
 
-    /// @notice Storage structure for audit data
+    /// Storage structure for audit data
     struct AuditStorage {
         mapping(bytes32 => AuditEvent) events;
         mapping(address => bytes32[]) accountEvents;
@@ -25,12 +25,14 @@ contract AuditFacet is IAudit, AccessControl, ReentrancyGuard, Pausable {
         mapping(bytes32 => bytes32) eventReferences;
         mapping(bytes32 => string) eventDetails;
         mapping(bytes32 => uint256) eventTimestamps;
+        bytes32[] allEventIds;
+        string[] hcsTopicNames;
         uint256 eventCounter;
         uint256 retentionPeriod;
         string[] requiredEventTypes;
     }
 
-    /// @notice Audit event structure
+    /// Audit event structure
     struct AuditEvent {
         bytes32 eventId;
         string eventType;
@@ -40,14 +42,18 @@ contract AuditFacet is IAudit, AccessControl, ReentrancyGuard, Pausable {
         uint256 timestamp;
     }
 
-    /// @notice Storage position for audit data
+    /// Storage position for audit data
     bytes32 constant AUDIT_STORAGE_POSITION =
         keccak256("diamond.audit.storage");
 
     /**
      * @dev Get audit storage
      */
-    function getAuditStorage() internal pure returns (AuditStorage storage as_) {
+    function getAuditStorage()
+        internal
+        pure
+        returns (AuditStorage storage as_)
+    {
         bytes32 position = AUDIT_STORAGE_POSITION;
         assembly {
             as_.slot := position
@@ -63,12 +69,14 @@ contract AuditFacet is IAudit, AccessControl, ReentrancyGuard, Pausable {
     ) external nonReentrant returns (bytes32 eventId) {
         AuditStorage storage as_ = getAuditStorage();
 
-        eventId = keccak256(abi.encodePacked(
-            block.timestamp,
-            account,
-            referenceId,
-            as_.eventCounter++
-        ));
+        eventId = keccak256(
+            abi.encodePacked(
+                block.timestamp,
+                account,
+                referenceId,
+                as_.eventCounter++
+            )
+        );
 
         as_.events[eventId] = AuditEvent({
             eventId: eventId,
@@ -87,8 +95,16 @@ contract AuditFacet is IAudit, AccessControl, ReentrancyGuard, Pausable {
         as_.eventReferences[eventId] = referenceId;
         as_.eventDetails[eventId] = details;
         as_.eventTimestamps[eventId] = block.timestamp;
+        as_.allEventIds.push(eventId);
 
-        emit AuditEventLogged(eventId, eventType, account, referenceId, details, block.timestamp);
+        emit AuditEventLogged(
+            eventId,
+            eventType,
+            account,
+            referenceId,
+            details,
+            block.timestamp
+        );
     }
 
     /// @inheritdoc IAudit
@@ -96,13 +112,17 @@ contract AuditFacet is IAudit, AccessControl, ReentrancyGuard, Pausable {
         address account,
         string calldata eventType,
         uint256 limit
-    ) external view returns (
-        bytes32[] memory eventIds,
-        string[] memory eventTypes,
-        bytes32[] memory referenceIds,
-        string[] memory details,
-        uint256[] memory timestamps
-    ) {
+    )
+        external
+        view
+        returns (
+            bytes32[] memory eventIds,
+            string[] memory eventTypes,
+            bytes32[] memory referenceIds,
+            string[] memory details,
+            uint256[] memory timestamps
+        )
+    {
         AuditStorage storage as_ = getAuditStorage();
         bytes32[] memory accountEventIds = as_.accountEvents[account];
 
@@ -112,7 +132,9 @@ contract AuditFacet is IAudit, AccessControl, ReentrancyGuard, Pausable {
             bytes32[] memory filtered = new bytes32[](accountEventIds.length);
 
             for (uint256 i = 0; i < accountEventIds.length; i++) {
-                if (_stringEquals(as_.eventTypes[accountEventIds[i]], eventType)) {
+                if (
+                    _stringEquals(as_.eventTypes[accountEventIds[i]], eventType)
+                ) {
                     filtered[count] = accountEventIds[i];
                     count++;
                 }
@@ -147,13 +169,19 @@ contract AuditFacet is IAudit, AccessControl, ReentrancyGuard, Pausable {
     }
 
     /// @inheritdoc IAudit
-    function getReferenceEvents(bytes32 referenceId) external view returns (
-        bytes32[] memory eventIds,
-        string[] memory eventTypes,
-        address[] memory accounts,
-        string[] memory details,
-        uint256[] memory timestamps
-    ) {
+    function getReferenceEvents(
+        bytes32 referenceId
+    )
+        external
+        view
+        returns (
+            bytes32[] memory eventIds,
+            string[] memory eventTypes,
+            address[] memory accounts,
+            string[] memory details,
+            uint256[] memory timestamps
+        )
+    {
         AuditStorage storage as_ = getAuditStorage();
         bytes32[] memory referenceEventIds = as_.referenceEvents[referenceId];
 
@@ -180,42 +208,129 @@ contract AuditFacet is IAudit, AccessControl, ReentrancyGuard, Pausable {
         uint256 endTime,
         string calldata eventType,
         uint256 limit
-    ) external view returns (
-        bytes32[] memory eventIds,
-        string[] memory eventTypes,
-        address[] memory accounts,
-        bytes32[] memory referenceIds,
-        uint256[] memory timestamps
-    ) {
-        // This would need to be implemented with a more sophisticated indexing system
-        // For now, return empty arrays
-        return (new bytes32[](0), new string[](0), new address[](0), new bytes32[](0), new uint256[](0));
+    )
+        external
+        view
+        returns (
+            bytes32[] memory eventIds,
+            string[] memory eventTypes,
+            address[] memory accounts,
+            bytes32[] memory referenceIds,
+            uint256[] memory timestamps
+        )
+    {
+        AuditStorage storage as_ = getAuditStorage();
+        bytes32[] storage allEvents = as_.allEventIds;
+
+        // First pass: count matching events
+        uint256 matchCount = 0;
+        bool filterByType = bytes(eventType).length > 0;
+
+        for (uint256 i = 0; i < allEvents.length && matchCount < limit; i++) {
+            bytes32 eventId = allEvents[i];
+            uint256 timestamp = as_.eventTimestamps[eventId];
+
+            // Check time range
+            if (timestamp < startTime || timestamp > endTime) {
+                continue;
+            }
+
+            // Check event type if specified
+            if (
+                filterByType &&
+                keccak256(bytes(as_.eventTypes[eventId])) !=
+                keccak256(bytes(eventType))
+            ) {
+                continue;
+            }
+
+            matchCount++;
+        }
+
+        // Initialize result arrays with actual match count
+        uint256 resultCount = matchCount < limit ? matchCount : limit;
+        eventIds = new bytes32[](resultCount);
+        eventTypes = new string[](resultCount);
+        accounts = new address[](resultCount);
+        referenceIds = new bytes32[](resultCount);
+        timestamps = new uint256[](resultCount);
+
+        // Second pass: populate results
+        uint256 resultIndex = 0;
+        for (
+            uint256 i = 0;
+            i < allEvents.length && resultIndex < resultCount;
+            i++
+        ) {
+            bytes32 eventId = allEvents[i];
+            uint256 timestamp = as_.eventTimestamps[eventId];
+
+            // Check time range
+            if (timestamp < startTime || timestamp > endTime) {
+                continue;
+            }
+
+            // Check event type if specified
+            if (
+                filterByType &&
+                keccak256(bytes(as_.eventTypes[eventId])) !=
+                keccak256(bytes(eventType))
+            ) {
+                continue;
+            }
+
+            // Add to results
+            eventIds[resultIndex] = eventId;
+            eventTypes[resultIndex] = as_.eventTypes[eventId];
+            accounts[resultIndex] = as_.eventAccounts[eventId];
+            referenceIds[resultIndex] = as_.eventReferences[eventId];
+            timestamps[resultIndex] = timestamp;
+            resultIndex++;
+        }
     }
 
     /// @inheritdoc IAudit
-    function registerHCSTopic(string calldata topicName, bytes32 topicId) external onlyAdmin nonReentrant {
+    function registerHCSTopic(
+        string calldata topicName,
+        bytes32 topicId
+    ) external onlyAdmin nonReentrant {
         AuditStorage storage as_ = getAuditStorage();
+
+        // Only add to list if it's a new topic
+        if (as_.hcsTopics[topicName] == bytes32(0)) {
+            as_.hcsTopicNames.push(topicName);
+        }
+
         as_.hcsTopics[topicName] = topicId;
 
         emit HCSTopicRegistered(topicName, topicId, msg.sender);
     }
 
     /// @inheritdoc IAudit
-    function getHCSTopic(string calldata topicName) external view returns (bytes32 topicId) {
+    function getHCSTopic(
+        string calldata topicName
+    ) external view returns (bytes32 topicId) {
         AuditStorage storage as_ = getAuditStorage();
         return as_.hcsTopics[topicName];
     }
 
     /// @inheritdoc IAudit
-    function getAllHCSTopics() external view returns (
-        string[] memory topicNames,
-        bytes32[] memory topicIds
-    ) {
+    function getAllHCSTopics()
+        external
+        view
+        returns (string[] memory topicNames, bytes32[] memory topicIds)
+    {
         AuditStorage storage as_ = getAuditStorage();
 
-        // This would need to be implemented with proper topic tracking
-        // For now, return empty arrays
-        return (new string[](0), new bytes32[](0));
+        uint256 count = as_.hcsTopicNames.length;
+        topicNames = new string[](count);
+        topicIds = new bytes32[](count);
+
+        for (uint256 i = 0; i < count; i++) {
+            string memory name = as_.hcsTopicNames[i];
+            topicNames[i] = name;
+            topicIds[i] = as_.hcsTopics[name];
+        }
     }
 
     /// @inheritdoc IAudit
@@ -227,20 +342,27 @@ contract AuditFacet is IAudit, AccessControl, ReentrancyGuard, Pausable {
         as_.retentionPeriod = newRetentionPeriod;
         as_.requiredEventTypes = newRequiredEvents;
 
-        emit AuditConfigUpdated(newRetentionPeriod, newRequiredEvents, msg.sender);
+        emit AuditConfigUpdated(
+            newRetentionPeriod,
+            newRequiredEvents,
+            msg.sender
+        );
     }
 
     /// @inheritdoc IAudit
-    function getAuditConfig() external view returns (
-        uint256 retentionPeriod,
-        string[] memory requiredEvents
-    ) {
+    function getAuditConfig()
+        external
+        view
+        returns (uint256 retentionPeriod, string[] memory requiredEvents)
+    {
         AuditStorage storage as_ = getAuditStorage();
         return (as_.retentionPeriod, as_.requiredEventTypes);
     }
 
     /// @inheritdoc IAudit
-    function isEventTypeRequired(string calldata eventType) external view returns (bool) {
+    function isEventTypeRequired(
+        string calldata eventType
+    ) external view returns (bool) {
         AuditStorage storage as_ = getAuditStorage();
 
         for (uint256 i = 0; i < as_.requiredEventTypes.length; i++) {
@@ -252,7 +374,9 @@ contract AuditFacet is IAudit, AccessControl, ReentrancyGuard, Pausable {
     }
 
     /// @inheritdoc IAudit
-    function cleanupOldEvents(uint256 beforeTimestamp) external onlyAdmin nonReentrant returns (uint256 cleanedCount) {
+    function cleanupOldEvents(
+        uint256 beforeTimestamp
+    ) external onlyAdmin nonReentrant returns (uint256 cleanedCount) {
         // Implementation would iterate through events and remove old ones
         // For now, return 0
         return 0;
@@ -261,7 +385,10 @@ contract AuditFacet is IAudit, AccessControl, ReentrancyGuard, Pausable {
     /**
      * @dev Compare strings for equality
      */
-    function _stringEquals(string memory a, string memory b) internal pure returns (bool) {
+    function _stringEquals(
+        string memory a,
+        string memory b
+    ) internal pure returns (bool) {
         return keccak256(abi.encodePacked(a)) == keccak256(abi.encodePacked(b));
     }
 

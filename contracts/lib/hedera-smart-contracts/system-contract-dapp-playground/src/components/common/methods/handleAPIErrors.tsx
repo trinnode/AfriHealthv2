@@ -81,7 +81,7 @@ export const handleAPIErrors = ({
     }
   });
 
-  // @notice if a transaction hash is returned, that means the transaction did make to the system contract but got reverted
+  // if a transaction hash is returned, that means the transaction did make to the system contract but got reverted
   if (transactionHash) {
     setTransactionResults((prev) => [
       ...prev,

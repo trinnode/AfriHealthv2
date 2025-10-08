@@ -19,7 +19,8 @@ contract DiamondCutFacet is IDiamond, ReentrancyGuard, Pausable {
         address _init,
         bytes calldata _calldata
     ) external nonReentrant {
-        DiamondStorage.DiamondStorageStruct storage ds = DiamondStorage.diamondStorage();
+        DiamondStorage.DiamondStorageStruct storage ds = DiamondStorage
+            .diamondStorage();
         require(msg.sender == ds.contractOwner, "DiamondCut: only owner");
 
         for (uint256 i = 0; i < _diamondCut.length; i++) {
@@ -46,7 +47,8 @@ contract DiamondCutFacet is IDiamond, ReentrancyGuard, Pausable {
 
     /// @inheritdoc IDiamond
     function facets() external view returns (Facet[] memory facets_) {
-        DiamondStorage.DiamondStorageStruct storage ds = DiamondStorage.diamondStorage();
+        DiamondStorage.DiamondStorageStruct storage ds = DiamondStorage
+            .diamondStorage();
 
         // Get all facet addresses
         address[] memory facetAddressesList = this.facetAddresses();
@@ -63,30 +65,39 @@ contract DiamondCutFacet is IDiamond, ReentrancyGuard, Pausable {
     }
 
     /// @inheritdoc IDiamond
-    function facetAddresses() external view returns (address[] memory facetAddresses_) {
-        DiamondStorage.DiamondStorageStruct storage ds = DiamondStorage.diamondStorage();
-
-        // This would need to be implemented with proper facet tracking
-        // For now, return empty array
-        facetAddresses_ = new address[](0);
+    function facetAddresses()
+        external
+        view
+        returns (address[] memory facetAddresses_)
+    {
+        return DiamondStorage.getAllFacetAddresses();
     }
 
     /// @inheritdoc IDiamond
-    function facetAddress(bytes4 _functionSelector) external view returns (address facetAddress_) {
-        DiamondStorage.DiamondStorageStruct storage ds = DiamondStorage.diamondStorage();
+    function facetAddress(
+        bytes4 _functionSelector
+    ) external view returns (address facetAddress_) {
+        DiamondStorage.DiamondStorageStruct storage ds = DiamondStorage
+            .diamondStorage();
         return ds.selectorToFacet[_functionSelector];
     }
 
     /// @inheritdoc IDiamond
-    function facetFunctionSelectors(address _facet) external view returns (bytes4[] memory facetFunctionSelectors_) {
-        DiamondStorage.DiamondStorageStruct storage ds = DiamondStorage.diamondStorage();
+    function facetFunctionSelectors(
+        address _facet
+    ) external view returns (bytes4[] memory facetFunctionSelectors_) {
+        DiamondStorage.DiamondStorageStruct storage ds = DiamondStorage
+            .diamondStorage();
         return ds.facetSelectors[_facet];
     }
 
     /// @inheritdoc IDiamond
-    function supportsInterface(bytes4 _interfaceId) external pure returns (bool) {
-        return _interfaceId == type(IDiamond).interfaceId ||
-               _interfaceId == 0x01ffc9a7; // ERC165 interface ID
+    function supportsInterface(
+        bytes4 _interfaceId
+    ) external pure returns (bool) {
+        return
+            _interfaceId == type(IDiamond).interfaceId ||
+            _interfaceId == 0x01ffc9a7; // ERC165 interface ID
     }
 
     /**
@@ -97,11 +108,17 @@ contract DiamondCutFacet is IDiamond, ReentrancyGuard, Pausable {
         address facet,
         bytes4[] memory selectors
     ) internal {
-        require(facet != address(0), "DiamondCut: facet cannot be zero address");
+        require(
+            facet != address(0),
+            "DiamondCut: facet cannot be zero address"
+        );
 
         for (uint256 i = 0; i < selectors.length; i++) {
             bytes4 selector = selectors[i];
-            require(ds.selectorToFacet[selector] == address(0), "DiamondCut: selector already exists");
+            require(
+                ds.selectorToFacet[selector] == address(0),
+                "DiamondCut: selector already exists"
+            );
 
             ds.selectorToFacet[selector] = facet;
             ds.facetSelectors[facet].push(selector);
@@ -117,12 +134,18 @@ contract DiamondCutFacet is IDiamond, ReentrancyGuard, Pausable {
         address facet,
         bytes4[] memory selectors
     ) internal {
-        require(facet != address(0), "DiamondCut: facet cannot be zero address");
+        require(
+            facet != address(0),
+            "DiamondCut: facet cannot be zero address"
+        );
 
         for (uint256 i = 0; i < selectors.length; i++) {
             bytes4 selector = selectors[i];
             address oldFacet = ds.selectorToFacet[selector];
-            require(oldFacet != address(0), "DiamondCut: selector does not exist");
+            require(
+                oldFacet != address(0),
+                "DiamondCut: selector does not exist"
+            );
 
             ds.selectorToFacet[selector] = facet;
 
@@ -154,7 +177,10 @@ contract DiamondCutFacet is IDiamond, ReentrancyGuard, Pausable {
         for (uint256 i = 0; i < selectors.length; i++) {
             bytes4 selector = selectors[i];
             address oldFacet = ds.selectorToFacet[selector];
-            require(oldFacet == facet, "DiamondCut: selector not owned by facet");
+            require(
+                oldFacet == facet,
+                "DiamondCut: selector not owned by facet"
+            );
 
             ds.selectorToFacet[selector] = address(0);
 
@@ -162,7 +188,9 @@ contract DiamondCutFacet is IDiamond, ReentrancyGuard, Pausable {
             bytes4[] storage facetSelectors = ds.facetSelectors[facet];
             for (uint256 j = 0; j < facetSelectors.length; j++) {
                 if (facetSelectors[j] == selector) {
-                    facetSelectors[j] = facetSelectors[facetSelectors.length - 1];
+                    facetSelectors[j] = facetSelectors[
+                        facetSelectors.length - 1
+                    ];
                     facetSelectors.pop();
                     break;
                 }

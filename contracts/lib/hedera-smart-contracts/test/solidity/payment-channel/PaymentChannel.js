@@ -83,11 +83,11 @@ describe('@solidityequiv2 PaymentChannel Test Suite', () => {
     const [contractBaleAfter, senderBalAfter, recipientBalAfter] =
       receipt.logs[1].args;
 
-    // @notice after closing the channel, all the contract balance will be faily distributed to the parties => contractBaleAfter should be 0
+    // after closing the channel, all the contract balance will be faily distributed to the parties => contractBaleAfter should be 0
     //
-    // @notice since the OWED_AMOUNT = 100000000, after closing the channel the recipient should receive 100000000 crypto units (i.e. OWED_AMOUNT)
+    // since the OWED_AMOUNT = 100000000, after closing the channel the recipient should receive 100000000 crypto units (i.e. OWED_AMOUNT)
     //
-    // @notice since the OWED_AMOUNT = 100000000 and the INITIAL_FUND (i.e. contractBaleAfter) = 300000000 =>
+    // since the OWED_AMOUNT = 100000000 and the INITIAL_FUND (i.e. contractBaleAfter) = 300000000 =>
     //          the left over, 300000000 - 100000000 = 200000000, will be transfered back to the sender (the channel funder)
     expect(contractBaleAfter).to.eq(0);
     expect(recipientBalAfter - recipientBalBefore).to.eq(OWED_AMOUNT);
@@ -119,7 +119,7 @@ describe('@solidityequiv2 PaymentChannel Test Suite', () => {
 
     const updatedExp = await paymentChannelContract.expiration();
 
-    // @notice as the caller is signers[1] who is not the sender => the .extend function will revert
+    // as the caller is signers[1] who is not the sender => the .extend function will revert
     expect(updatedExp).to.eq(currentExp);
     expect(updatedExp).to.not.eq(newExp);
   });

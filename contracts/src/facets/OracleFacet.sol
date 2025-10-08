@@ -14,18 +14,20 @@ import "../utils/Pausable.sol";
 contract OracleFacet is IOracle, AccessControl, ReentrancyGuard, Pausable {
     using DiamondStorage for DiamondStorage.DiamondStorageStruct;
 
-    /// @notice Storage structure for oracle data
+    /// Storage structure for oracle data
     struct OracleStorage {
         mapping(bytes32 => OracleRequest) requests;
         mapping(string => OracleData) dataFeeds;
         mapping(string => string) dataSources;
         mapping(bytes32 => bool) fulfilledRequests;
+        bytes32[] pendingRequestIds;
+        mapping(bytes32 => uint256) requestIdToIndex;
         uint256 requestTimeout;
         uint256 maxRetries;
         uint256 requestCounter;
     }
 
-    /// @notice Oracle request structure
+    /// Oracle request structure
     struct OracleRequest {
         bytes32 requestId;
         string dataType;
@@ -36,21 +38,25 @@ contract OracleFacet is IOracle, AccessControl, ReentrancyGuard, Pausable {
         bool fulfilled;
     }
 
-    /// @notice Oracle data structure
+    /// Oracle data structure
     struct OracleData {
         bytes data;
         uint256 timestamp;
         uint256 lastUpdated;
     }
 
-    /// @notice Storage position for oracle data
+    /// Storage position for oracle data
     bytes32 constant ORACLE_STORAGE_POSITION =
         keccak256("diamond.oracle.storage");
 
     /**
      * @dev Get oracle storage
      */
-    function getOracleStorage() internal pure returns (OracleStorage storage os) {
+    function getOracleStorage()
+        internal
+        pure
+        returns (OracleStorage storage os)
+    {
         bytes32 position = ORACLE_STORAGE_POSITION;
         assembly {
             os.slot := position
@@ -64,11 +70,9 @@ contract OracleFacet is IOracle, AccessControl, ReentrancyGuard, Pausable {
     ) external nonReentrant whenNotPaused returns (bytes32 requestId) {
         OracleStorage storage os = getOracleStorage();
 
-        requestId = keccak256(abi.encodePacked(
-            msg.sender,
-            block.timestamp,
-            os.requestCounter++
-        ));
+        requestId = keccak256(
+            abi.encodePacked(msg.sender, block.timestamp, os.requestCounter++)
+        );
 
         os.requests[requestId] = OracleRequest({
             requestId: requestId,
@@ -80,19 +84,32 @@ contract OracleFacet is IOracle, AccessControl, ReentrancyGuard, Pausable {
             fulfilled: false
         });
 
+        // Track pending request
+        os.requestIdToIndex[requestId] = os.pendingRequestIds.length;
+        os.pendingRequestIds.push(requestId);
+
         emit OracleDataRequested(requestId, dataType, parameters, msg.sender);
     }
 
     /// @inheritdoc IOracle
-    function fulfillData(bytes32 requestId, bytes calldata data) external onlyAdmin nonReentrant {
+    function fulfillData(
+        bytes32 requestId,
+        bytes calldata data
+    ) external onlyAdmin nonReentrant {
         OracleStorage storage os = getOracleStorage();
         OracleRequest storage request = os.requests[requestId];
 
         require(!request.fulfilled, "Oracle: request already fulfilled");
-        require(block.timestamp <= request.timestamp + os.requestTimeout, "Oracle: request timeout");
+        require(
+            block.timestamp <= request.timestamp + os.requestTimeout,
+            "Oracle: request timeout"
+        );
 
         request.fulfilled = true;
         os.fulfilledRequests[requestId] = true;
+
+        // Remove from pending requests
+        _removePendingRequest(requestId);
 
         // Update data feed
         os.dataFeeds[request.dataType] = OracleData({
@@ -101,8 +118,18 @@ contract OracleFacet is IOracle, AccessControl, ReentrancyGuard, Pausable {
             lastUpdated: block.timestamp
         });
 
-        emit OracleDataReceived(requestId, request.dataType, data, block.timestamp);
-        emit OracleResponseProcessed(requestId, true, "success", block.timestamp);
+        emit OracleDataReceived(
+            requestId,
+            request.dataType,
+            data,
+            block.timestamp
+        );
+        emit OracleResponseProcessed(
+            requestId,
+            true,
+            "success",
+            block.timestamp
+        );
     }
 
     /// @inheritdoc IOracle
@@ -127,7 +154,9 @@ contract OracleFacet is IOracle, AccessControl, ReentrancyGuard, Pausable {
         string calldata toCurrency
     ) external view returns (uint256 rate, uint256 timestamp) {
         OracleStorage storage os = getOracleStorage();
-        string memory key = string(abi.encodePacked("fx:", fromCurrency, ":", toCurrency));
+        string memory key = string(
+            abi.encodePacked("fx:", fromCurrency, ":", toCurrency)
+        );
 
         OracleData memory oracleData = os.dataFeeds[key];
         if (oracleData.data.length == 0) {
@@ -143,9 +172,15 @@ contract OracleFacet is IOracle, AccessControl, ReentrancyGuard, Pausable {
     function checkMedicalCode(
         string calldata code,
         string calldata codeType
-    ) external view returns (bool isValid, bool isCovered, uint256 coveragePercentage) {
+    )
+        external
+        view
+        returns (bool isValid, bool isCovered, uint256 coveragePercentage)
+    {
         OracleStorage storage os = getOracleStorage();
-        string memory key = string(abi.encodePacked("medical:", codeType, ":", code));
+        string memory key = string(
+            abi.encodePacked("medical:", codeType, ":", code)
+        );
 
         OracleData memory oracleData = os.dataFeeds[key];
         if (oracleData.data.length == 0) {
@@ -153,11 +188,17 @@ contract OracleFacet is IOracle, AccessControl, ReentrancyGuard, Pausable {
         }
 
         // Assuming data is encoded as (bool isValid, bool isCovered, uint256 coveragePercentage)
-        (isValid, isCovered, coveragePercentage) = abi.decode(oracleData.data, (bool, bool, uint256));
+        (isValid, isCovered, coveragePercentage) = abi.decode(
+            oracleData.data,
+            (bool, bool, uint256)
+        );
     }
 
     /// @inheritdoc IOracle
-    function updateOracleSource(string calldata dataType, string calldata newSource) external onlyAdmin nonReentrant {
+    function updateOracleSource(
+        string calldata dataType,
+        string calldata newSource
+    ) external onlyAdmin nonReentrant {
         OracleStorage storage os = getOracleStorage();
         os.dataSources[dataType] = newSource;
 
@@ -165,7 +206,9 @@ contract OracleFacet is IOracle, AccessControl, ReentrancyGuard, Pausable {
     }
 
     /// @inheritdoc IOracle
-    function getOracleSource(string calldata dataType) external view returns (string memory source) {
+    function getOracleSource(
+        string calldata dataType
+    ) external view returns (string memory source) {
         OracleStorage storage os = getOracleStorage();
         return os.dataSources[dataType];
     }
@@ -175,7 +218,12 @@ contract OracleFacet is IOracle, AccessControl, ReentrancyGuard, Pausable {
         bytes32 requestId,
         string calldata dataType,
         bytes calldata data
-    ) external onlyAdmin nonReentrant returns (bool success, string memory result) {
+    )
+        external
+        onlyAdmin
+        nonReentrant
+        returns (bool success, string memory result)
+    {
         OracleStorage storage os = getOracleStorage();
 
         if (os.fulfilledRequests[requestId]) {
@@ -195,17 +243,34 @@ contract OracleFacet is IOracle, AccessControl, ReentrancyGuard, Pausable {
     }
 
     /// @inheritdoc IOracle
-    function getPendingRequests() external view returns (
-        bytes32[] memory requestIds,
-        string[] memory dataTypes,
-        string[] memory parameters,
-        uint256[] memory requestedAts
-    ) {
+    function getPendingRequests()
+        external
+        view
+        returns (
+            bytes32[] memory requestIds,
+            string[] memory dataTypes,
+            string[] memory parameters,
+            uint256[] memory requestedAts
+        )
+    {
         OracleStorage storage os = getOracleStorage();
+        uint256 pendingCount = os.pendingRequestIds.length;
 
-        // This would need to be implemented with a proper pending requests tracking
-        // For now, return empty arrays
-        return (new bytes32[](0), new string[](0), new string[](0), new uint256[](0));
+        requestIds = new bytes32[](pendingCount);
+        dataTypes = new string[](pendingCount);
+        parameters = new string[](pendingCount);
+        requestedAts = new uint256[](pendingCount);
+
+        for (uint256 i = 0; i < pendingCount; i++) {
+            bytes32 reqId = os.pendingRequestIds[i];
+            OracleRequest storage req = os.requests[reqId];
+            requestIds[i] = reqId;
+            dataTypes[i] = req.dataType;
+            parameters[i] = req.parameters;
+            requestedAts[i] = req.timestamp;
+        }
+
+        return (requestIds, dataTypes, parameters, requestedAts);
     }
 
     /// @inheritdoc IOracle
@@ -215,25 +280,43 @@ contract OracleFacet is IOracle, AccessControl, ReentrancyGuard, Pausable {
 
         require(msg.sender == request.requester, "Oracle: not requester");
         require(!request.fulfilled, "Oracle: already fulfilled");
-        require(request.retryCount < os.maxRetries, "Oracle: max retries exceeded");
-        require(block.timestamp > request.timestamp + os.requestTimeout, "Oracle: still in timeout");
+        require(
+            request.retryCount < os.maxRetries,
+            "Oracle: max retries exceeded"
+        );
+        require(
+            block.timestamp > request.timestamp + os.requestTimeout,
+            "Oracle: still in timeout"
+        );
 
         request.retryCount++;
         request.timestamp = block.timestamp;
         request.fulfilled = false;
 
-        emit OracleDataRequested(requestId, request.dataType, request.parameters, msg.sender);
+        emit OracleDataRequested(
+            requestId,
+            request.dataType,
+            request.parameters,
+            msg.sender
+        );
     }
 
     /// @inheritdoc IOracle
-    function setOracleConfig(uint256 newTimeout, uint256 newMaxRetries) external onlyAdmin nonReentrant {
+    function setOracleConfig(
+        uint256 newTimeout,
+        uint256 newMaxRetries
+    ) external onlyAdmin nonReentrant {
         OracleStorage storage os = getOracleStorage();
         os.requestTimeout = newTimeout;
         os.maxRetries = newMaxRetries;
     }
 
     /// @inheritdoc IOracle
-    function getOracleConfig() external view returns (uint256 timeout, uint256 maxRetries) {
+    function getOracleConfig()
+        external
+        view
+        returns (uint256 timeout, uint256 maxRetries)
+    {
         OracleStorage storage os = getOracleStorage();
         return (os.requestTimeout, os.maxRetries);
     }
@@ -246,5 +329,24 @@ contract OracleFacet is IOracle, AccessControl, ReentrancyGuard, Pausable {
         os.requestTimeout = 3600; // 1 hour
         os.maxRetries = 3;
         os.requestCounter = 0;
+    }
+
+    /**
+     * @dev Remove a request from pending list (internal helper)
+     * @param requestId The request ID to remove
+     */
+    function _removePendingRequest(bytes32 requestId) internal {
+        OracleStorage storage os = getOracleStorage();
+        uint256 index = os.requestIdToIndex[requestId];
+        uint256 lastIndex = os.pendingRequestIds.length - 1;
+
+        if (index != lastIndex) {
+            bytes32 lastRequestId = os.pendingRequestIds[lastIndex];
+            os.pendingRequestIds[index] = lastRequestId;
+            os.requestIdToIndex[lastRequestId] = index;
+        }
+
+        os.pendingRequestIds.pop();
+        delete os.requestIdToIndex[requestId];
     }
 }

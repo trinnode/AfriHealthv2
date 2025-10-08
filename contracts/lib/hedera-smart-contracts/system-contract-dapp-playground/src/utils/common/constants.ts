@@ -29,20 +29,20 @@ import TokenTransferContract from '@hashgraph-smartcontract/artifacts/contracts/
 import TokenCreateCustomContract from '@hashgraph-smartcontract/artifacts/contracts/system-contracts/hedera-token-service/examples/token-create/TokenCreateCustom.sol/TokenCreateCustomContract.json';
 import TokenManagementContract from '@hashgraph-smartcontract/artifacts/contracts/system-contracts/hedera-token-service/examples/token-manage/TokenManagementContract.sol/TokenManagementContract.json';
 
-/** @notice Hedera Smart Contract official github url */
+/** Hedera Smart Contract official github url */
 export const HEDERA_SMART_CONTRACT_OFFICIAL_GITHUB_URL =
   'https://github.com/hashgraph/hedera-smart-contracts';
 
-/** @notice Hedera Improvement Proposals official url */
+/** Hedera Improvement Proposals official url */
 export const HEDERA_OFFICIAL_HIPS_URL = 'https://hips.hedera.com/';
 
-/** @notice hashcan baseURL */
+/** hashcan baseURL */
 export const HASHSCAN_BASE_URL = 'https://hashscan.io';
 
-/** @notice Hedera network */
+/** Hedera network */
 export const OFFCIAL_NETWORK_NAME = 'HEDERA';
 
-/** @notice information about Hedera social media */
+/** information about Hedera social media */
 export const HEDERA_SOCIAL_MEDIA = [
   {
     name: 'discord',
@@ -75,7 +75,7 @@ export const HEDERA_SOCIAL_MEDIA = [
 ];
 
 /**
- * @notice information about Hedera Networks
+ * information about Hedera Networks
  */
 export const HEDERA_NETWORKS = {
   mainnet: {
@@ -133,7 +133,7 @@ export const HEDERA_NETWORKS = {
 };
 
 /**
- * @notice information about protected routes
+ * information about protected routes
  */
 export const PROTECTED_ROUTES = [
   '/hedera/overview',
@@ -147,7 +147,7 @@ export const PROTECTED_ROUTES = [
 ];
 
 /**
- * @notice information for NavSideBar items
+ * information for NavSideBar items
  */
 export const NAV_SIDE_BAR_ITEMS = [
   {
@@ -181,7 +181,7 @@ export const NAV_SIDE_BAR_ITEMS = [
 ];
 
 /**
- * @notice an object storing contract names
+ * an object storing contract names
  */
 export const CONTRACT_NAMES: Record<string, TContractName> = {
   ERC20: 'ERC20Mock',
@@ -196,7 +196,7 @@ export const CONTRACT_NAMES: Record<string, TContractName> = {
 };
 
 /**
- * @notice information about Hedera Smart Contract assets
+ * information about Hedera Smart Contract assets
  */
 export const HEDERA_SMART_CONTRACTS_ASSETS = {
   HTS_PRECOMPILED: [
@@ -291,14 +291,14 @@ export const HEDERA_SMART_CONTRACTS_ASSETS = {
   },
 };
 
-/** @notice Hedera branding colors */
+/** Hedera branding colors */
 export const HEDERA_BRANDING_COLORS = {
   violet: '#82ACF9',
   purple: '#A98DF4',
   panel: '#374151',
 };
 
-/** @notice Input box sizes */
+/** Input box sizes */
 export const HEDERA_CHAKRA_INPUT_BOX_SIZES = {
   'extra-small': 'xs',
   small: 'sm',
@@ -306,18 +306,18 @@ export const HEDERA_CHAKRA_INPUT_BOX_SIZES = {
   large: 'lg',
 };
 
-/** @notice Table Variants */
+/** Table Variants */
 export const HEDERA_CHAKRA_TABLE_VARIANTS = {
   simple: 'simple',
   striped: 'striped',
   unstyled: 'unstyled',
 };
 
-/** @notice Input box shared class name */
+/** Input box shared class name */
 export const HEDERA_CHAKRA_INPUT_BOX_SHARED_CLASSNAME = 'w-full border-white/30';
 
 /**
- * @notice a shared object for parameters input fields
+ * a shared object for parameters input fields
  */
 export const HEDERA_SHARED_PARAM_INPUT_FIELDS = {
   paramKey: '',
@@ -330,7 +330,7 @@ export const HEDERA_SHARED_PARAM_INPUT_FIELDS = {
 };
 
 /**
- * @notice a shared object maping contract name to storage key value
+ * a shared object maping contract name to storage key value
  */
 export const CONTRACT_NAME_TO_STORAGE_KEY_VALUE: Record<TContractName, string> = {
   ERC20Mock: 'ERC-20',
@@ -345,7 +345,7 @@ export const CONTRACT_NAME_TO_STORAGE_KEY_VALUE: Record<TContractName, string> =
 };
 
 /**
- * @notice a shared object stores all transaction result storage keys
+ * a shared object stores all transaction result storage keys
  */
 const prepareTransactionResultStorageKey = (
   contractKey: string,
@@ -413,18 +413,18 @@ export const HEDERA_TRANSACTION_RESULT_STORAGE_KEYS = {
 };
 
 /**
- * @notice stores common revert reasons from wallet
+ * stores common revert reasons from wallet
  */
 export const HEDERA_COMMON_WALLET_REVERT_REASONS = {
   REJECT: {
-    // @notice 4001 error code is returned when a metamask wallet request is rejected by the user
-    // @notice See https://docs.metamask.io/wallet/reference/provider-api/#errors for more information on the error returned by Metamask.
+    // 4001 error code is returned when a metamask wallet request is rejected by the user
+    // See https://docs.metamask.io/wallet/reference/provider-api/#errors for more information on the error returned by Metamask.
     code: '4001',
     description: 'You have rejected the request.',
   },
   NETWORK_SWITCH: {
-    // @notice -32002 error code is returned when a metamask wallet request is already in progress
-    // @notice See https://docs.metamask.io/wallet/reference/provider-api/#errors for more information on the error returned by Metamask.
+    // -32002 error code is returned when a metamask wallet request is already in progress
+    // See https://docs.metamask.io/wallet/reference/provider-api/#errors for more information on the error returned by Metamask.
     code: '-32002',
     description: 'A network switch request already in progress.',
   },
@@ -462,7 +462,7 @@ export const HEDERA_COMMON_WALLET_REVERT_REASONS = {
 };
 
 /**
- * @notice stores common transaction type constants
+ * stores common transaction type constants
  */
 export const HEDERA_COMMON_TRANSACTION_TYPE = {
   ERC20_MINT: 'ERC20-MINT',

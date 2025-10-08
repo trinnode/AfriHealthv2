@@ -20,7 +20,7 @@ library IdGenerator {
     ) internal view returns (bytes32) {
         return keccak256(abi.encodePacked(
             block.timestamp,
-            block.difficulty,
+            block.prevrandao,
             param1,
             param2,
             param3
@@ -41,7 +41,7 @@ library IdGenerator {
     ) internal view returns (bytes32) {
         return keccak256(abi.encodePacked(
             block.timestamp,
-            block.difficulty,
+            block.prevrandao,
             param1,
             param2,
             param3
@@ -64,7 +64,7 @@ library IdGenerator {
     ) internal view returns (bytes32) {
         return keccak256(abi.encodePacked(
             block.timestamp,
-            block.difficulty,
+            block.prevrandao,
             param1,
             param2,
             param3,

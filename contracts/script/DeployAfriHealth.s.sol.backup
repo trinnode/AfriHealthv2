@@ -15,7 +15,7 @@ import "../src/facets/AIPolicyFacet.sol";
 /**
  * @title DeployAfriHealth
  * @dev Deployment script for AfriHealth Ledger Diamond contract
- * @notice Deploys all facets and initializes the diamond
+ * Deploys all facets and initializes the diamond
  */
 contract DeployAfriHealth is Script {
     // Diamond and facets

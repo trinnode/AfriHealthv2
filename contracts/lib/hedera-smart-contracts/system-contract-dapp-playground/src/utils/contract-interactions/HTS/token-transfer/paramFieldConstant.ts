@@ -20,7 +20,7 @@
 
 import { HEDERA_SHARED_PARAM_INPUT_FIELDS } from '@/utils/common/constants';
 
-/** @notice an object holding information for the queryTokenInfo's input fields */
+/** an object holding information for the queryTokenInfo's input fields */
 export const htsCryptoTransferParamFields = {
   accountID: {
     ...HEDERA_SHARED_PARAM_INPUT_FIELDS,
@@ -77,7 +77,7 @@ export const htsCryptoTransferParamFields = {
   },
 };
 
-/** @notice an object holding information for the tokenTransfer's input fields */
+/** an object holding information for the tokenTransfer's input fields */
 export const htsTokenTransferParamFields = {
   hederaTokenAddress: {
     ...HEDERA_SHARED_PARAM_INPUT_FIELDS,
@@ -117,7 +117,7 @@ export const htsTokenTransferParamFields = {
   },
 };
 
-/** @notice an object holding information for the tokenTransfer's input fields */
+/** an object holding information for the tokenTransfer's input fields */
 export const htsMultiTokensTransferParamFields = {
   hederaTokenAddress: {
     ...HEDERA_SHARED_PARAM_INPUT_FIELDS,

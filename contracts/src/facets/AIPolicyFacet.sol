@@ -15,7 +15,7 @@ import "../utils/IdGenerator.sol";
 contract AIPolicyFacet is IAIPolicy, AccessControl, ReentrancyGuard, Pausable {
     using DiamondStorage for DiamondStorage.DiamondStorageStruct;
 
-    /// @notice Storage structure for AI policy data
+    /// Storage structure for AI policy data
     struct AIPolicyStorage {
         mapping(bytes32 => Policy) policies;
         mapping(address => bytes32) activePolicies;
@@ -24,7 +24,7 @@ contract AIPolicyFacet is IAIPolicy, AccessControl, ReentrancyGuard, Pausable {
         PolicySettings policySettings;
     }
 
-    /// @notice Policy structure
+    /// Policy structure
     struct Policy {
         bytes32 policyId;
         address patient;
@@ -36,7 +36,7 @@ contract AIPolicyFacet is IAIPolicy, AccessControl, ReentrancyGuard, Pausable {
         uint256 createdAt;
     }
 
-    /// @notice Policy evaluation structure
+    /// Policy evaluation structure
     struct Evaluation {
         bytes32 invoiceId;
         string result;
@@ -45,21 +45,25 @@ contract AIPolicyFacet is IAIPolicy, AccessControl, ReentrancyGuard, Pausable {
         uint256 timestamp;
     }
 
-    /// @notice Policy settings structure
+    /// Policy settings structure
     struct PolicySettings {
         uint256 defaultAutoApproveLimit;
         uint256 maxAutoApproveLimit;
         uint256 minConfidenceThreshold;
     }
 
-    /// @notice Storage position for AI policy data
+    /// Storage position for AI policy data
     bytes32 constant AI_POLICY_STORAGE_POSITION =
         keccak256("diamond.aipolicy.storage");
 
     /**
      * @dev Get AI policy storage
      */
-    function getAIPolicyStorage() internal pure returns (AIPolicyStorage storage aps) {
+    function getAIPolicyStorage()
+        internal
+        pure
+        returns (AIPolicyStorage storage aps)
+    {
         bytes32 position = AI_POLICY_STORAGE_POSITION;
         assembly {
             aps.slot := position
@@ -76,9 +80,16 @@ contract AIPolicyFacet is IAIPolicy, AccessControl, ReentrancyGuard, Pausable {
     ) external nonReentrant whenNotPaused returns (bytes32 policyId) {
         AIPolicyStorage storage aps = getAIPolicyStorage();
 
-        require(autoApproveLimit <= aps.policySettings.maxAutoApproveLimit, "AIPolicy: limit too high");
+        require(
+            autoApproveLimit <= aps.policySettings.maxAutoApproveLimit,
+            "AIPolicy: limit too high"
+        );
 
-        policyId = IdGenerator.generatePolicyId(patient, name, keccak256(abi.encodePacked(rules)));
+        policyId = IdGenerator.generatePolicyId(
+            patient,
+            name,
+            keccak256(abi.encodePacked(rules))
+        );
 
         aps.policies[policyId] = Policy({
             policyId: policyId,
@@ -93,7 +104,13 @@ contract AIPolicyFacet is IAIPolicy, AccessControl, ReentrancyGuard, Pausable {
 
         aps.patientPolicies[patient].push(policyId);
 
-        emit PolicyCreated(policyId, patient, name, autoApproveLimit, msg.sender);
+        emit PolicyCreated(
+            policyId,
+            patient,
+            name,
+            autoApproveLimit,
+            msg.sender
+        );
     }
 
     /// @inheritdoc IAIPolicy
@@ -107,8 +124,14 @@ contract AIPolicyFacet is IAIPolicy, AccessControl, ReentrancyGuard, Pausable {
         AIPolicyStorage storage aps = getAIPolicyStorage();
         Policy storage policy = aps.policies[policyId];
 
-        require(policy.patient == msg.sender || hasRole(ADMIN_ROLE, msg.sender), "AIPolicy: not authorized");
-        require(autoApproveLimit <= aps.policySettings.maxAutoApproveLimit, "AIPolicy: limit too high");
+        require(
+            policy.patient == msg.sender || hasRole(ADMIN_ROLE, msg.sender),
+            "AIPolicy: not authorized"
+        );
+        require(
+            autoApproveLimit <= aps.policySettings.maxAutoApproveLimit,
+            "AIPolicy: limit too high"
+        );
 
         policy.name = name;
         policy.rules = rules;
@@ -123,7 +146,10 @@ contract AIPolicyFacet is IAIPolicy, AccessControl, ReentrancyGuard, Pausable {
         AIPolicyStorage storage aps = getAIPolicyStorage();
         Policy storage policy = aps.policies[policyId];
 
-        require(policy.patient == msg.sender || hasRole(ADMIN_ROLE, msg.sender), "AIPolicy: not authorized");
+        require(
+            policy.patient == msg.sender || hasRole(ADMIN_ROLE, msg.sender),
+            "AIPolicy: not authorized"
+        );
 
         // Remove from patient policies array
         _removeFromPatientPolicies(aps, policy.patient, policyId);
@@ -139,12 +165,18 @@ contract AIPolicyFacet is IAIPolicy, AccessControl, ReentrancyGuard, Pausable {
     }
 
     /// @inheritdoc IAIPolicy
-    function setActivePolicy(address patient, bytes32 policyId) external nonReentrant whenNotPaused {
+    function setActivePolicy(
+        address patient,
+        bytes32 policyId
+    ) external nonReentrant whenNotPaused {
         AIPolicyStorage storage aps = getAIPolicyStorage();
         Policy storage policy = aps.policies[policyId];
 
         require(policy.patient == patient, "AIPolicy: policy not for patient");
-        require(patient == msg.sender || hasRole(ADMIN_ROLE, msg.sender), "AIPolicy: not authorized");
+        require(
+            patient == msg.sender || hasRole(ADMIN_ROLE, msg.sender),
+            "AIPolicy: not authorized"
+        );
 
         aps.activePolicies[patient] = policyId;
         policy.isActive = true;
@@ -158,7 +190,12 @@ contract AIPolicyFacet is IAIPolicy, AccessControl, ReentrancyGuard, Pausable {
         uint256 amount,
         string calldata category,
         address provider
-    ) external nonReentrant whenNotPaused returns (string memory result, string memory reason, uint256 confidence) {
+    )
+        external
+        nonReentrant
+        whenNotPaused
+        returns (string memory result, string memory reason, uint256 confidence)
+    {
         AIPolicyStorage storage aps = getAIPolicyStorage();
 
         bytes32 policyId = aps.activePolicies[msg.sender];
@@ -195,29 +232,43 @@ contract AIPolicyFacet is IAIPolicy, AccessControl, ReentrancyGuard, Pausable {
         }
 
         // Store evaluation
-        aps.evaluationHistory[policyId].push(Evaluation({
-            invoiceId: invoiceId,
-            result: result,
-            reason: reason,
-            confidence: confidence,
-            timestamp: block.timestamp
-        }));
+        aps.evaluationHistory[policyId].push(
+            Evaluation({
+                invoiceId: invoiceId,
+                result: result,
+                reason: reason,
+                confidence: confidence,
+                timestamp: block.timestamp
+            })
+        );
 
-        emit InvoiceEvaluated(invoiceId, policyId, result, reason, block.timestamp);
+        emit InvoiceEvaluated(
+            invoiceId,
+            policyId,
+            result,
+            reason,
+            block.timestamp
+        );
 
         return (result, reason, confidence);
     }
 
     /// @inheritdoc IAIPolicy
-    function getPolicy(bytes32 policyId) external view returns (
-        address patient,
-        string memory name,
-        string memory rules,
-        uint256 autoApproveLimit,
-        string[] memory categoryFilters,
-        bool isActive,
-        uint256 createdAt
-    ) {
+    function getPolicy(
+        bytes32 policyId
+    )
+        external
+        view
+        returns (
+            address patient,
+            string memory name,
+            string memory rules,
+            uint256 autoApproveLimit,
+            string[] memory categoryFilters,
+            bool isActive,
+            uint256 createdAt
+        )
+    {
         AIPolicyStorage storage aps = getAIPolicyStorage();
         Policy memory policy = aps.policies[policyId];
 
@@ -233,13 +284,17 @@ contract AIPolicyFacet is IAIPolicy, AccessControl, ReentrancyGuard, Pausable {
     }
 
     /// @inheritdoc IAIPolicy
-    function getActivePolicyId(address patient) external view returns (bytes32 policyId) {
+    function getActivePolicyId(
+        address patient
+    ) external view returns (bytes32 policyId) {
         AIPolicyStorage storage aps = getAIPolicyStorage();
         return aps.activePolicies[patient];
     }
 
     /// @inheritdoc IAIPolicy
-    function getPatientPolicyIds(address patient) external view returns (bytes32[] memory policyIds) {
+    function getPatientPolicyIds(
+        address patient
+    ) external view returns (bytes32[] memory policyIds) {
         AIPolicyStorage storage aps = getAIPolicyStorage();
         return aps.patientPolicies[patient];
     }
@@ -248,11 +303,15 @@ contract AIPolicyFacet is IAIPolicy, AccessControl, ReentrancyGuard, Pausable {
     function getEvaluationHistory(
         bytes32 policyId,
         uint256 limit
-    ) external view returns (
-        bytes32[] memory invoiceIds,
-        string[] memory results,
-        uint256[] memory timestamps
-    ) {
+    )
+        external
+        view
+        returns (
+            bytes32[] memory invoiceIds,
+            string[] memory results,
+            uint256[] memory timestamps
+        )
+    {
         AIPolicyStorage storage aps = getAIPolicyStorage();
         Evaluation[] memory evaluations = aps.evaluationHistory[policyId];
 
@@ -316,7 +375,10 @@ contract AIPolicyFacet is IAIPolicy, AccessControl, ReentrancyGuard, Pausable {
     /**
      * @dev Compare strings for equality
      */
-    function _stringEquals(string memory a, string memory b) internal pure returns (bool) {
+    function _stringEquals(
+        string memory a,
+        string memory b
+    ) internal pure returns (bool) {
         return keccak256(abi.encodePacked(a)) == keccak256(abi.encodePacked(b));
     }
 
@@ -328,8 +390,8 @@ contract AIPolicyFacet is IAIPolicy, AccessControl, ReentrancyGuard, Pausable {
 
         aps.policySettings = PolicySettings({
             defaultAutoApproveLimit: 1000, // Default $1000
-            maxAutoApproveLimit: 10000,    // Maximum $10,000
-            minConfidenceThreshold: 70     // Minimum 70% confidence
+            maxAutoApproveLimit: 10000, // Maximum $10,000
+            minConfidenceThreshold: 70 // Minimum 70% confidence
         });
     }
 }

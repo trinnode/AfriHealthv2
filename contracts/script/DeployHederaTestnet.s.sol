@@ -17,7 +17,7 @@ import "../src/interfaces/IDiamond.sol";
 
 /**
  * @title DeployHederaTestnet
- * @notice Deployment script for AfriHealth Diamond to Hedera Testnet
+ * Deployment script for AfriHealth Diamond to Hedera Testnet
  * @dev This script deploys the Diamond proxy and all facets with proper initialization
  *
  * Usage:
@@ -61,8 +61,15 @@ contract DeployHederaTestnet is Script {
     DeployedContracts public deployed;
 
     function run() external {
-        // Get deployer from private key
-        uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
+        // Get deployer private key from environment variable
+        // For local testing with Anvil, you can use the default Anvil key
+        // For Hedera testnet/mainnet, set DEPLOYER_PRIVATE_KEY in .env
+        uint256 deployerPrivateKey = vm.envOr(
+            "DEPLOYER_PRIVATE_KEY",
+            uint256(
+                0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+            )
+        );
         address deployer = vm.addr(deployerPrivateKey);
 
         console.log("===========================================");
@@ -156,6 +163,7 @@ contract DeployHederaTestnet is Script {
         console.log("Step 2: Adding facets to Diamond...");
         console.log("");
 
+        // Create facet cuts array (9 facets - DiamondCutFacet already registered in constructor)
         IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](9);
 
         // DiamondLoupeFacet
@@ -213,9 +221,9 @@ contract DeployHederaTestnet is Script {
 
         // BillingFacet
         bytes4[] memory billingSelectors = new bytes4[](3);
-        billingSelectors[0] = BillingFacet.createBill.selector;
-        billingSelectors[1] = BillingFacet.approveBill.selector;
-        billingSelectors[2] = BillingFacet.getBill.selector;
+        billingSelectors[0] = BillingFacet.createInvoice.selector;
+        billingSelectors[1] = BillingFacet.processPayment.selector;
+        billingSelectors[2] = BillingFacet.getInvoice.selector;
 
         cuts[4] = IDiamond.FacetCut({
             facetAddress: deployed.billingFacet,
@@ -238,8 +246,8 @@ contract DeployHederaTestnet is Script {
         // InsurancePoolFacet
         bytes4[] memory poolSelectors = new bytes4[](3);
         poolSelectors[0] = InsurancePoolFacet.joinPool.selector;
-        poolSelectors[1] = InsurancePoolFacet.contributeToPool.selector;
-        poolSelectors[2] = InsurancePoolFacet.getPoolBalance.selector;
+        poolSelectors[1] = InsurancePoolFacet.payPremium.selector;
+        poolSelectors[2] = InsurancePoolFacet.getPoolStats.selector;
 
         cuts[6] = IDiamond.FacetCut({
             facetAddress: deployed.insurancePoolFacet,
@@ -260,7 +268,7 @@ contract DeployHederaTestnet is Script {
 
         // RecordsRegistryFacet
         bytes4[] memory recordsSelectors = new bytes4[](2);
-        recordsSelectors[0] = RecordsRegistryFacet.addRecord.selector;
+        recordsSelectors[0] = RecordsRegistryFacet.registerRecord.selector;
         recordsSelectors[1] = RecordsRegistryFacet.getRecord.selector;
 
         cuts[8] = IDiamond.FacetCut({
@@ -269,7 +277,7 @@ contract DeployHederaTestnet is Script {
             functionSelectors: recordsSelectors
         });
 
-        // Execute diamond cut
+        // Execute diamond cut - now diamondCut selector is registered in Diamond constructor
         IDiamond(deployed.diamond).diamondCut(cuts, address(0), "");
 
         console.log("All facets added successfully!");

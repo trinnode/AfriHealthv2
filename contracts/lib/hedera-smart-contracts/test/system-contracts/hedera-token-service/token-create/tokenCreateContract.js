@@ -290,7 +290,7 @@ describe('TokenCreateContract Test Suite', function () {
   });
 
   describe('Hapi vs Ethereum token create test', function () {
-    // @notice: The param values below are preset to match the values preset in the
+    //: The param values below are preset to match the values preset in the
     // `createFungibleTokenWithSECP256K1AdminKeyPublic()` method in the TokenCreateContract.sol
     const tokenName = 'tokenName';
     const tokenSymbol = 'tokenSymbol';
@@ -342,7 +342,7 @@ describe('TokenCreateContract Test Suite', function () {
     }
 
     async function createTokenviaSystemContract() {
-      // @notice: Use `.createFungibleTokenWithSECP256K1AdminKeyPublic()` for token key purposes.
+      //: Use `.createFungibleTokenWithSECP256K1AdminKeyPublic()` for token key purposes.
       const tokenAddressTx =
         await tokenCreateContract.createFungibleTokenWithSECP256K1AdminKeyPublic(
           signers[0].address,

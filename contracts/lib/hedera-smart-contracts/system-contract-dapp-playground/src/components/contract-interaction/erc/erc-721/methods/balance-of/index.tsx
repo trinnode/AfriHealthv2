@@ -74,7 +74,7 @@ const ERC721BalanceOf = ({ baseContract }: PageProps) => {
   }, [toaster, transactionResultStorageKey]);
 
   /** @dev handle executing balance of */
-  /** @notice wrapping handleExecuteBalanceOf in useCallback hook to prevent excessive re-renders */
+  /** wrapping handleExecuteBalanceOf in useCallback hook to prevent excessive re-renders */
   const handleExecuteBalanceOf = useCallback(
     async (accountAddress: string, refreshMode?: boolean) => {
       // sanitize params

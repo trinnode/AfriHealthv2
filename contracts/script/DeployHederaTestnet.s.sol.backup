@@ -17,7 +17,7 @@ import "../src/interfaces/IDiamond.sol";
 
 /**
  * @title DeployHederaTestnet
- * @notice Deployment script for AfriHealth Diamond to Hedera Testnet
+ * Deployment script for AfriHealth Diamond to Hedera Testnet
  * @dev This script deploys the Diamond proxy and all facets with proper initialization
  *
  * Usage:

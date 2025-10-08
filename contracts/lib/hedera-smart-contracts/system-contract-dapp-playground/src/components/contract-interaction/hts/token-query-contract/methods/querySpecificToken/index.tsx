@@ -220,7 +220,7 @@ const QueryTokenSpecificInfomation = ({ baseContract }: PageProps) => {
           setTokenInfo(cachedTokenInfo);
           break;
 
-        /** @notice TOKEN_TYPE returns -1, 0, 1 respectively UNRECOGNIZED, FUNGIBLE_COMMON, NON_FUNGIBLE_UNIQUE */
+        /** TOKEN_TYPE returns -1, 0, 1 respectively UNRECOGNIZED, FUNGIBLE_COMMON, NON_FUNGIBLE_UNIQUE */
         case 'TOKEN_TYPE':
           const tokenTypeResult = Number(tokenInfoResult[eventMaps[API]]);
           cachedTokenInfo =

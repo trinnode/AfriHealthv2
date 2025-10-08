@@ -47,7 +47,7 @@ describe('@IHRC-906 Facade @CryptoAllowance  Test Suite', function () {
     expect(receipt.status).to.eq(1);
   });
 
-  // @notice: skipping until mirror-node fully enables HIP906
+  //: skipping until mirror-node fully enables HIP906
   xit('should execute hbarAllowance() by an EOA to retrieve allowance granted to a spender', async () => {
     const approveTx = await walletIHRC906AccountFacade.hbarApprove(
       walletC.address,
@@ -56,7 +56,7 @@ describe('@IHRC-906 Facade @CryptoAllowance  Test Suite', function () {
     );
     await approveTx.wait();
 
-    // @notice: staticCall() method gets the return values instead of transaction information
+    //: staticCall() method gets the return values instead of transaction information
     const result = await walletIHRC906AccountFacade.hbarAllowance.staticCall(
       walletC.address,
       Constants.GAS_LIMIT_1_000_000

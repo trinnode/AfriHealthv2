@@ -126,7 +126,7 @@ describe('@yulequiv Contract Caller Test Suite', async () => {
     // get storage count within ContractCaller contract
     const storageCount = await contractCaller.count();
 
-    // @notice since callcode use the code from `targetContract` to update `ContractCaller` contract
+    // since callcode use the code from `targetContract` to update `ContractCaller` contract
     //          => `storageCount` is expected to equal `COUNT_A`
     expect(storageCount).to.eq(COUNT_A);
     expect(callSetCountResult).to.be.true;
@@ -151,7 +151,7 @@ describe('@yulequiv Contract Caller Test Suite', async () => {
     // get storage count within ContractCaller contract
     const storageCount = await contractCaller.count();
 
-    // @notice since callcode use the code from `targetContract` to update `ContractCaller` contract
+    // since callcode use the code from `targetContract` to update `ContractCaller` contract
     //          => `storageCount` is expected to equal `COUNT_A`
     expect(storageCount).to.eq(COUNT_A);
     expect(callSetCountResult).to.be.true;

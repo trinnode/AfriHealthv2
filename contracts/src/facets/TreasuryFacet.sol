@@ -14,7 +14,7 @@ import "../utils/Pausable.sol";
 contract TreasuryFacet is ITreasury, AccessControl, ReentrancyGuard, Pausable {
     using DiamondStorage for DiamondStorage.DiamondStorageStruct;
 
-    /// @notice Storage structure for treasury data
+    /// Storage structure for treasury data
     struct TreasuryStorage {
         mapping(address => uint256) balances;
         mapping(address => uint256) thresholds;
@@ -25,14 +25,18 @@ contract TreasuryFacet is ITreasury, AccessControl, ReentrancyGuard, Pausable {
         uint256 insuranceFee;
     }
 
-    /// @notice Storage position for treasury data
+    /// Storage position for treasury data
     bytes32 constant TREASURY_STORAGE_POSITION =
         keccak256("diamond.treasury.storage");
 
     /**
      * @dev Get treasury storage
      */
-    function getTreasuryStorage() internal pure returns (TreasuryStorage storage ts) {
+    function getTreasuryStorage()
+        internal
+        pure
+        returns (TreasuryStorage storage ts)
+    {
         bytes32 position = TREASURY_STORAGE_POSITION;
         assembly {
             ts.slot := position
@@ -40,7 +44,10 @@ contract TreasuryFacet is ITreasury, AccessControl, ReentrancyGuard, Pausable {
     }
 
     /// @inheritdoc ITreasury
-    function collectFees(uint256 amount, string calldata feeType) external nonReentrant whenNotPaused {
+    function collectFees(
+        uint256 amount,
+        string calldata feeType
+    ) external nonReentrant whenNotPaused {
         TreasuryStorage storage ts = getTreasuryStorage();
 
         address token = address(0); // HBAR for now
@@ -51,7 +58,12 @@ contract TreasuryFacet is ITreasury, AccessControl, ReentrancyGuard, Pausable {
             ts.lastFeeCollection[msg.sender][feeType] = block.timestamp;
 
             emit FeesCollected(token, feeAmount, feeType, msg.sender);
-            emit TreasuryBalanceChanged(token, ts.balances[token] - feeAmount, ts.balances[token], "fee_collection");
+            emit TreasuryBalanceChanged(
+                token,
+                ts.balances[token] - feeAmount,
+                ts.balances[token],
+                "fee_collection"
+            );
         }
     }
 
@@ -68,21 +80,35 @@ contract TreasuryFacet is ITreasury, AccessControl, ReentrancyGuard, Pausable {
 
         ts.balances[token] -= amount;
 
-        emit FundsDistributed(token, recipient, amount, distributionType, msg.sender);
-        emit TreasuryBalanceChanged(token, ts.balances[token] + amount, ts.balances[token], "distribution");
+        emit FundsDistributed(
+            token,
+            recipient,
+            amount,
+            distributionType,
+            msg.sender
+        );
+        emit TreasuryBalanceChanged(
+            token,
+            ts.balances[token] + amount,
+            ts.balances[token],
+            "distribution"
+        );
     }
 
     /// @inheritdoc ITreasury
-    function getTreasuryBalance(address token) external view returns (uint256 balance) {
+    function getTreasuryBalance(
+        address token
+    ) external view returns (uint256 balance) {
         TreasuryStorage storage ts = getTreasuryStorage();
         return ts.balances[token];
     }
 
     /// @inheritdoc ITreasury
-    function getAllTreasuryBalances() external view returns (
-        address[] memory tokens,
-        uint256[] memory balances
-    ) {
+    function getAllTreasuryBalances()
+        external
+        view
+        returns (address[] memory tokens, uint256[] memory balances)
+    {
         TreasuryStorage storage ts = getTreasuryStorage();
 
         // For now, return HBAR balance only
@@ -109,20 +135,28 @@ contract TreasuryFacet is ITreasury, AccessControl, ReentrancyGuard, Pausable {
         ts.feeRates["platform"] = newPlatformFee;
         ts.feeRates["insurance"] = newInsuranceFee;
 
-        emit TreasuryParametersUpdated(newPlatformFee, newInsuranceFee, msg.sender);
+        emit TreasuryParametersUpdated(
+            newPlatformFee,
+            newInsuranceFee,
+            msg.sender
+        );
     }
 
     /// @inheritdoc ITreasury
-    function getTreasuryParameters() external view returns (
-        uint256 platformFee,
-        uint256 insuranceFee
-    ) {
+    function getTreasuryParameters()
+        external
+        view
+        returns (uint256 platformFee, uint256 insuranceFee)
+    {
         TreasuryStorage storage ts = getTreasuryStorage();
         return (ts.platformFee, ts.insuranceFee);
     }
 
     /// @inheritdoc ITreasury
-    function calculateFee(uint256 amount, string calldata feeType) external view returns (uint256 feeAmount) {
+    function calculateFee(
+        uint256 amount,
+        string calldata feeType
+    ) external view returns (uint256 feeAmount) {
         TreasuryStorage storage ts = getTreasuryStorage();
         return (amount * ts.feeRates[feeType]) / 10000; // Basis points
     }
@@ -141,11 +175,19 @@ contract TreasuryFacet is ITreasury, AccessControl, ReentrancyGuard, Pausable {
         ts.balances[token] -= amount;
 
         emit FundsDistributed(token, recipient, amount, reason, msg.sender);
-        emit TreasuryBalanceChanged(token, oldBalance, ts.balances[token], "withdrawal");
+        emit TreasuryBalanceChanged(
+            token,
+            oldBalance,
+            ts.balances[token],
+            "withdrawal"
+        );
     }
 
     /// @inheritdoc ITreasury
-    function setFeeExemption(address account, bool exempted) external onlyAdmin nonReentrant {
+    function setFeeExemption(
+        address account,
+        bool exempted
+    ) external onlyAdmin nonReentrant {
         TreasuryStorage storage ts = getTreasuryStorage();
         ts.feeExemptions[account] = exempted;
     }
@@ -157,23 +199,34 @@ contract TreasuryFacet is ITreasury, AccessControl, ReentrancyGuard, Pausable {
     }
 
     /// @inheritdoc ITreasury
-    function getFeeDistributionStats(uint256 timePeriod) external view returns (
-        uint256 totalFees,
-        uint256 totalDistributions,
-        int256 netBalance
-    ) {
+    function getFeeDistributionStats(
+        uint256 timePeriod
+    )
+        external
+        view
+        returns (
+            uint256 totalFees,
+            uint256 totalDistributions,
+            int256 netBalance
+        )
+    {
         // Implementation would calculate stats for the time period
         return (0, 0, 0);
     }
 
     /// @inheritdoc ITreasury
-    function setTreasuryThreshold(address token, uint256 threshold) external onlyAdmin nonReentrant {
+    function setTreasuryThreshold(
+        address token,
+        uint256 threshold
+    ) external onlyAdmin nonReentrant {
         TreasuryStorage storage ts = getTreasuryStorage();
         ts.thresholds[token] = threshold;
     }
 
     /// @inheritdoc ITreasury
-    function getTreasuryThreshold(address token) external view returns (uint256 threshold) {
+    function getTreasuryThreshold(
+        address token
+    ) external view returns (uint256 threshold) {
         TreasuryStorage storage ts = getTreasuryStorage();
         return ts.thresholds[token];
     }
@@ -191,7 +244,7 @@ contract TreasuryFacet is ITreasury, AccessControl, ReentrancyGuard, Pausable {
         TreasuryStorage storage ts = getTreasuryStorage();
 
         ts.platformFee = 100; // 1% in basis points
-        ts.insuranceFee = 50;  // 0.5% in basis points
+        ts.insuranceFee = 50; // 0.5% in basis points
 
         ts.feeRates["platform"] = 100;
         ts.feeRates["insurance"] = 50;

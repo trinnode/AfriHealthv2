@@ -150,7 +150,7 @@ export const handleContractResponse = async (
   // retrieve responseCode from event
   const { data } = txReceipt.logs.filter((event: any) => event.fragment.name === 'ResponseCode')[0];
 
-  // @notice: 22 represents the predefined response code from the Hedera system contracts, indicating a successful transaction.
+  //: 22 represents the predefined response code from the Hedera system contracts, indicating a successful transaction.
   return { result: Number(data) === 22, transactionHash: txReceipt.hash };
 };
 
@@ -177,7 +177,7 @@ export const handleContractResponseWithDynamicEventNames = async (
 /**
  * @dev convert an `args` Proxy object returned from events to HTS Token Info object
  *
- * @notice applicable for QueryGeneralInfo APIs
+ * applicable for QueryGeneralInfo APIs
  */
 export const convertsArgsProxyToHTSTokenInfo = (
   proxyObj: any,
@@ -232,7 +232,7 @@ export const convertsArgsProxyToHTSTokenInfo = (
 /**
  * @dev convert an `args` Proxy object returned from events to HTS FEES/KEYS/EXPIRY info
  *
- * @notice applicable for QuerySpecificInfo APIs
+ * applicable for QuerySpecificInfo APIs
  */
 export const convertsArgsProxyToHTSSpecificInfo = (
   proxyObj: any,

@@ -6,7 +6,7 @@ pragma solidity ^0.8.20;
  * @dev Interface for insurance claims management in AfriHealth Ledger
  */
 interface IClaims {
-    /// @notice Emitted when a claim is submitted
+    /// Emitted when a claim is submitted
     event ClaimSubmitted(
         bytes32 indexed claimId,
         address indexed patient,
@@ -17,7 +17,7 @@ interface IClaims {
         uint256 submittedAt
     );
 
-    /// @notice Emitted when a claim is approved
+    /// Emitted when a claim is approved
     event ClaimApproved(
         bytes32 indexed claimId,
         uint256 approvedAmount,
@@ -25,7 +25,7 @@ interface IClaims {
         uint256 approvedAt
     );
 
-    /// @notice Emitted when a claim is denied
+    /// Emitted when a claim is denied
     event ClaimDenied(
         bytes32 indexed claimId,
         string reason,
@@ -33,7 +33,7 @@ interface IClaims {
         uint256 deniedAt
     );
 
-    /// @notice Emitted when a claim is paid
+    /// Emitted when a claim is paid
     event ClaimPaid(
         bytes32 indexed claimId,
         uint256 amount,
@@ -41,7 +41,7 @@ interface IClaims {
         uint256 paidAt
     );
 
-    /// @notice Emitted when additional evidence is submitted
+    /// Emitted when additional evidence is submitted
     event ClaimEvidenceSubmitted(
         bytes32 indexed claimId,
         bytes32 evidenceHash,
@@ -49,14 +49,14 @@ interface IClaims {
         address indexed submittedBy
     );
 
-    /// @notice Emitted when claim is escalated to dispute
+    /// Emitted when claim is escalated to dispute
     event ClaimDisputed(
         bytes32 indexed claimId,
         bytes32 indexed disputeId,
         address indexed escalatedBy
     );
 
-    /// @notice Submit a new insurance claim
+    /// Submit a new insurance claim
     /// @param patient Patient address
     /// @param diagnosis Diagnosis code/description
     /// @param treatment Treatment description
@@ -73,7 +73,7 @@ interface IClaims {
         string[] calldata itemCodes
     ) external returns (bytes32 claimId);
 
-    /// @notice Approve a claim (insurer/admin only)
+    /// Approve a claim (insurer/admin only)
     /// @param claimId Claim identifier
     /// @param approvedAmount Amount to approve
     /// @param notes Approval notes
@@ -83,16 +83,16 @@ interface IClaims {
         string calldata notes
     ) external;
 
-    /// @notice Deny a claim (insurer/admin only)
+    /// Deny a claim (insurer/admin only)
     /// @param claimId Claim identifier
     /// @param reason Reason for denial
     function denyClaim(bytes32 claimId, string calldata reason) external;
 
-    /// @notice Pay an approved claim
+    /// Pay an approved claim
     /// @param claimId Claim identifier
     function payClaim(bytes32 claimId) external;
 
-    /// @notice Submit additional evidence for a claim
+    /// Submit additional evidence for a claim
     /// @param claimId Claim identifier
     /// @param evidenceHash Hash of additional evidence
     /// @param evidenceType Type of evidence
@@ -102,7 +102,7 @@ interface IClaims {
         string calldata evidenceType
     ) external;
 
-    /// @notice Escalate claim to dispute process
+    /// Escalate claim to dispute process
     /// @param claimId Claim identifier
     /// @param reason Reason for escalation
     /// @return disputeId Unique identifier for the created dispute
@@ -111,7 +111,7 @@ interface IClaims {
         string calldata reason
     ) external returns (bytes32 disputeId);
 
-    /// @notice Get claim details
+    /// Get claim details
     /// @param claimId Claim identifier
     /// @return patient Patient address
     /// @return provider Provider address (if applicable)
@@ -123,20 +123,25 @@ interface IClaims {
     /// @return submittedAt When claim was submitted
     /// @return approvedAt When claim was approved (if applicable)
     /// @return paidAt When claim was paid (if applicable)
-    function getClaim(bytes32 claimId) external view returns (
-        address patient,
-        address provider,
-        string memory diagnosis,
-        string memory treatment,
-        uint256 amount,
-        uint256 approvedAmount,
-        string memory status,
-        uint256 submittedAt,
-        uint256 approvedAt,
-        uint256 paidAt
-    );
+    function getClaim(
+        bytes32 claimId
+    )
+        external
+        view
+        returns (
+            address patient,
+            address provider,
+            string memory diagnosis,
+            string memory treatment,
+            uint256 amount,
+            uint256 approvedAmount,
+            string memory status,
+            uint256 submittedAt,
+            uint256 approvedAt,
+            uint256 paidAt
+        );
 
-    /// @notice Get claims for a patient
+    /// Get claims for a patient
     /// @param patient Patient address
     /// @param status Filter by status (empty string for all)
     /// @return claimIds Array of claim identifiers
@@ -145,38 +150,50 @@ interface IClaims {
         string calldata status
     ) external view returns (bytes32[] memory claimIds);
 
-    /// @notice Get claims requiring review (insurer/admin only)
+    /// Get claims requiring review (insurer/admin only)
     /// @param limit Maximum number of claims to return
     /// @return claimIds Array of claim identifiers needing review
-    function getClaimsForReview(uint256 limit) external view returns (bytes32[] memory claimIds);
+    function getClaimsForReview(
+        uint256 limit
+    ) external view returns (bytes32[] memory claimIds);
 
-    /// @notice Get claim evidence
+    /// Get claim evidence
     /// @param claimId Claim identifier
     /// @return evidenceHashes Array of evidence hashes
     /// @return evidenceTypes Array of evidence types
     /// @return submittedBys Array of submitter addresses
     /// @return submittedAts Array of submission timestamps
-    function getClaimEvidence(bytes32 claimId) external view returns (
-        bytes32[] memory evidenceHashes,
-        string[] memory evidenceTypes,
-        address[] memory submittedBys,
-        uint256[] memory submittedAts
-    );
+    function getClaimEvidence(
+        bytes32 claimId
+    )
+        external
+        view
+        returns (
+            bytes32[] memory evidenceHashes,
+            string[] memory evidenceTypes,
+            address[] memory submittedBys,
+            uint256[] memory submittedAts
+        );
 
-    /// @notice Get claim statistics for a patient
+    /// Get claim statistics for a patient
     /// @param patient Patient address
     /// @return totalClaims Total number of claims
     /// @return approvedClaims Number of approved claims
     /// @return totalApprovedAmount Total amount approved
     /// @return averageApprovalTime Average time to approval in days
-    function getClaimStats(address patient) external view returns (
-        uint256 totalClaims,
-        uint256 approvedClaims,
-        uint256 totalApprovedAmount,
-        uint256 averageApprovalTime
-    );
+    function getClaimStats(
+        address patient
+    )
+        external
+        view
+        returns (
+            uint256 totalClaims,
+            uint256 approvedClaims,
+            uint256 totalApprovedAmount,
+            uint256 averageApprovalTime
+        );
 
-    /// @notice Check if claim can be submitted
+    /// Check if claim can be submitted
     /// @param patient Patient address
     /// @param amount Claim amount
     /// @return canSubmit True if claim can be submitted
@@ -186,18 +203,22 @@ interface IClaims {
         uint256 amount
     ) external view returns (bool canSubmit, string memory reason);
 
-    /// @notice Get claim processing deadline
+    /// Get claim processing deadline
     /// @param claimId Claim identifier
     /// @return deadline Processing deadline timestamp
-    function getClaimDeadline(bytes32 claimId) external view returns (uint256 deadline);
+    function getClaimDeadline(
+        bytes32 claimId
+    ) external view returns (uint256 deadline);
 
-    /// @notice Check if claim processing is overdue
+    /// Check if claim processing is overdue
     /// @param claimId Claim identifier
     /// @return True if claim processing is overdue
     function isClaimOverdue(bytes32 claimId) external view returns (bool);
 
-    /// @notice Get overdue claims (admin only)
+    /// Get overdue claims (admin only)
     /// @param limit Maximum number of claims to return
     /// @return claimIds Array of overdue claim identifiers
-    function getOverdueClaims(uint256 limit) external view returns (bytes32[] memory claimIds);
+    function getOverdueClaims(
+        uint256 limit
+    ) external view returns (bytes32[] memory claimIds);
 }

@@ -121,7 +121,7 @@ const ActivitySection = () => {
         );
 
         // storage the filteredTransactionResults back to storage
-        // @notice if  filteredTransactionResults.length === 0, remove that key in storage
+        // if  filteredTransactionResults.length === 0, remove that key in storage
         if (filteredTransactionResults.length === 0) {
           localStorage.removeItem(record.transactionResultStorageKey);
         } else {

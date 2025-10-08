@@ -15,7 +15,7 @@ import "../utils/IdGenerator.sol";
 contract ConsentFacet is IConsent, AccessControl, ReentrancyGuard, Pausable {
     using DiamondStorage for DiamondStorage.DiamondStorageStruct;
 
-    /// @notice Storage structure for consent data
+    /// Storage structure for consent data
     struct ConsentStorage {
         mapping(bytes32 => ConsentRequest) consentRequests;
         mapping(address => bytes32[]) patientConsents;
@@ -23,7 +23,7 @@ contract ConsentFacet is IConsent, AccessControl, ReentrancyGuard, Pausable {
         bytes32[] expiredConsents;
     }
 
-    /// @notice Consent request structure
+    /// Consent request structure
     struct ConsentRequest {
         bytes32 consentId;
         address patient;
@@ -35,14 +35,18 @@ contract ConsentFacet is IConsent, AccessControl, ReentrancyGuard, Pausable {
         uint256 grantedAt;
     }
 
-    /// @notice Storage position for consent data
+    /// Storage position for consent data
     bytes32 constant CONSENT_STORAGE_POSITION =
         keccak256("diamond.consent.storage");
 
     /**
      * @dev Get consent storage
      */
-    function getConsentStorage() internal pure returns (ConsentStorage storage cs) {
+    function getConsentStorage()
+        internal
+        pure
+        returns (ConsentStorage storage cs)
+    {
         bytes32 position = CONSENT_STORAGE_POSITION;
         assembly {
             cs.slot := position
@@ -55,7 +59,13 @@ contract ConsentFacet is IConsent, AccessControl, ReentrancyGuard, Pausable {
         string[] calldata scopes,
         uint256 duration,
         string calldata purpose
-    ) external onlyProvider nonReentrant whenNotPaused returns (bytes32 consentId) {
+    )
+        external
+        onlyProvider
+        nonReentrant
+        whenNotPaused
+        returns (bytes32 consentId)
+    {
         ConsentStorage storage cs = getConsentStorage();
 
         consentId = IdGenerator.generateConsentId(patient, msg.sender, purpose);
@@ -74,24 +84,38 @@ contract ConsentFacet is IConsent, AccessControl, ReentrancyGuard, Pausable {
         // Add to patient consents
         cs.patientConsents[patient].push(consentId);
 
-        emit ConsentRequested(patient, msg.sender, consentId, scopes, block.timestamp + duration, purpose);
+        emit ConsentRequested(
+            patient,
+            msg.sender,
+            consentId,
+            scopes,
+            block.timestamp + duration,
+            purpose
+        );
     }
 
     /// @inheritdoc IConsent
-    function grantConsent(bytes32 consentId) external nonReentrant whenNotPaused {
+    function grantConsent(
+        bytes32 consentId
+    ) external nonReentrant whenNotPaused {
         ConsentStorage storage cs = getConsentStorage();
         ConsentRequest storage request = cs.consentRequests[consentId];
 
         require(request.patient == msg.sender, "Consent: not consent owner");
         require(!request.isGranted, "Consent: already granted");
-        require(block.timestamp < request.expiresAt, "Consent: request expired");
+        require(
+            block.timestamp < request.expiresAt,
+            "Consent: request expired"
+        );
 
         request.isGranted = true;
         request.grantedAt = block.timestamp;
 
         // Set active consents for each scope
         for (uint256 i = 0; i < request.scopes.length; i++) {
-            cs.activeConsents[request.patient][request.provider][request.scopes[i]] = consentId;
+            cs.activeConsents[request.patient][request.provider][
+                request.scopes[i]
+            ] = consentId;
         }
 
         emit ConsentGranted(consentId, msg.sender, block.timestamp);
@@ -102,13 +126,18 @@ contract ConsentFacet is IConsent, AccessControl, ReentrancyGuard, Pausable {
         ConsentStorage storage cs = getConsentStorage();
         ConsentRequest storage request = cs.consentRequests[consentId];
 
-        require(request.patient == msg.sender || hasRole(ADMIN_ROLE, msg.sender), "Consent: not authorized");
+        require(
+            request.patient == msg.sender || hasRole(ADMIN_ROLE, msg.sender),
+            "Consent: not authorized"
+        );
 
         request.isGranted = false;
 
         // Remove from active consents
         for (uint256 i = 0; i < request.scopes.length; i++) {
-            delete cs.activeConsents[request.patient][request.provider][request.scopes[i]];
+            delete cs.activeConsents[request.patient][request.provider][
+                request.scopes[i]
+            ];
         }
 
         emit ConsentRevoked(consentId, msg.sender, block.timestamp);
@@ -136,21 +165,29 @@ contract ConsentFacet is IConsent, AccessControl, ReentrancyGuard, Pausable {
     }
 
     /// @inheritdoc IConsent
-    function getPatientConsents(address patient) external view returns (bytes32[] memory consentIds) {
+    function getPatientConsents(
+        address patient
+    ) external view returns (bytes32[] memory consentIds) {
         ConsentStorage storage cs = getConsentStorage();
         return cs.patientConsents[patient];
     }
 
     /// @inheritdoc IConsent
-    function getConsentRequest(bytes32 consentId) external view returns (
-        address patient,
-        address provider,
-        string[] memory scopes,
-        uint256 expiresAt,
-        string memory purpose,
-        bool isGranted,
-        uint256 grantedAt
-    ) {
+    function getConsentRequest(
+        bytes32 consentId
+    )
+        external
+        view
+        returns (
+            address patient,
+            address provider,
+            string[] memory scopes,
+            uint256 expiresAt,
+            string memory purpose,
+            bool isGranted,
+            uint256 grantedAt
+        )
+    {
         ConsentStorage storage cs = getConsentStorage();
         ConsentRequest memory request = cs.consentRequests[consentId];
 
@@ -166,14 +203,26 @@ contract ConsentFacet is IConsent, AccessControl, ReentrancyGuard, Pausable {
     }
 
     /// @inheritdoc IConsent
-    function invokeEmergencyAccess(address patient, string calldata reason) external override(IConsent, AccessControl) onlyProvider nonReentrant {
+    function invokeEmergencyAccess(
+        address patient,
+        string calldata reason
+    ) external override(IConsent, AccessControl) onlyProvider nonReentrant {
         // Check if provider has emergency access (this would integrate with AccessControlFacet)
         // For now, emit the event
-        emit EmergencyAccessInvoked(patient, msg.sender, reason, block.timestamp);
+        emit EmergencyAccessInvoked(
+            patient,
+            msg.sender,
+            reason,
+            block.timestamp
+        );
     }
 
     /// @inheritdoc IConsent
-    function cleanupExpiredConsents() external nonReentrant returns (uint256 cleanedCount) {
+    function cleanupExpiredConsents()
+        external
+        nonReentrant
+        returns (uint256 cleanedCount)
+    {
         ConsentStorage storage cs = getConsentStorage();
 
         // This would iterate through all consents and clean up expired ones

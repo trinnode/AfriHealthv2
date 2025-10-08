@@ -20,7 +20,7 @@
 
 import localFont from 'next/font/local';
 
-/** @notice learn more about localFont at https://nextjs.org/docs/app/building-your-application/optimizing/fonts#local-fonts */
+/** learn more about localFont at https://nextjs.org/docs/app/building-your-application/optimizing/fonts#local-fonts */
 const StyreneAWebFont = localFont({
   src: [
     {

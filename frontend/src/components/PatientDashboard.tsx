@@ -4,23 +4,20 @@ import { Card, Button, Badge, Input } from "./UI";
 import { useWalletStore } from "../stores";
 import {
   getMockPatientStats,
-  getMockConsents,
   getMockBills,
   getMockAppointments,
-  getMockMedicalRecords,
-  getMockInsuranceClaims,
   getMockActivities,
   formatDate,
   formatCurrency,
 } from "../services/mockDataService";
-import type {
-  Consent,
-  Bill,
-  Appointment,
-  MedicalRecord,
-  InsuranceClaim,
-  Activity,
-} from "../types";
+import type { Bill, Appointment, Activity } from "../types";
+
+// Import new contract-based components
+import { MedicalRecords } from "./records/MedicalRecords";
+import { InvoiceManagement } from "./billing/InvoiceManagement";
+import { ClaimsManagement } from "./claims/ClaimsManagement";
+import { ConsentManagement } from "./consent/ConsentManagement";
+import { IdentityManagement } from "./identity/IdentityManagement";
 
 type TabName =
   | "overview"
@@ -29,6 +26,7 @@ type TabName =
   | "consents"
   | "billing"
   | "insurance"
+  | "identity"
   | "prescriptions"
   | "profile";
 
@@ -39,13 +37,10 @@ export default function PatientDashboard() {
   const { accountId } = useWalletStore();
   const [activeTab, setActiveTab] = useState<TabName>("overview");
 
-  // Load mock data
+  // Load mock data (for overview only)
   const stats = getMockPatientStats();
-  const consents = getMockConsents();
   const bills = getMockBills();
   const appointments = getMockAppointments();
-  const records = getMockMedicalRecords();
-  const claims = getMockInsuranceClaims();
   const activities = getMockActivities();
 
   const tabs: { id: TabName; label: string; icon: string }[] = [
@@ -55,6 +50,7 @@ export default function PatientDashboard() {
     { id: "consents", label: "Consents", icon: "🔐" },
     { id: "billing", label: "Billing", icon: "💰" },
     { id: "insurance", label: "Insurance", icon: "🏥" },
+    { id: "identity", label: "Identity", icon: "🆔" },
     { id: "prescriptions", label: "Prescriptions", icon: "💊" },
     { id: "profile", label: "Profile", icon: "👤" },
   ];
@@ -99,33 +95,39 @@ export default function PatientDashboard() {
       <div className="max-w-7xl mx-auto">
         <AnimatePresence mode="wait">
           <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          transition={{ duration: 0.3 }}
-        >
-          {activeTab === "overview" && (
-            <OverviewTab
-              stats={stats}
-              activities={activities}
-              appointments={appointments}
-              bills={bills}
-            />
-          )}
-          {activeTab === "records" && <RecordsTab records={records} />}
-          {activeTab === "appointments" && (
-            <AppointmentsTab appointments={appointments} />
-          )}
-          {activeTab === "consents" && <ConsentsTab consents={consents} />}
-          {activeTab === "billing" && <BillingTab bills={bills} />}
-          {activeTab === "insurance" && (
-            <InsuranceTab claims={claims} stats={stats} />
-          )}
-          {activeTab === "prescriptions" && <PrescriptionsTab />}
-          {activeTab === "profile" && <ProfileTab />}
-        </motion.div>
-      </AnimatePresence>
+            key={activeTab}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            {activeTab === "overview" && (
+              <OverviewTab
+                stats={stats}
+                activities={activities}
+                appointments={appointments}
+                bills={bills}
+              />
+            )}
+            {activeTab === "records" && accountId && (
+              <MedicalRecords patientId={accountId} />
+            )}
+            {activeTab === "consents" && accountId && (
+              <ConsentManagement accountId={accountId} isProvider={false} />
+            )}
+            {activeTab === "billing" && accountId && (
+              <InvoiceManagement accountId={accountId} isProvider={false} />
+            )}
+            {activeTab === "insurance" && accountId && (
+              <ClaimsManagement accountId={accountId} isReviewer={false} />
+            )}
+            {activeTab === "identity" && accountId && (
+              <IdentityManagement accountId={accountId} isAdmin={false} />
+            )}
+            {activeTab === "prescriptions" && <PrescriptionsTab />}
+            {activeTab === "profile" && <ProfileTab />}
+          </motion.div>
+        </AnimatePresence>
       </div>
     </div>
   );
@@ -282,456 +284,6 @@ function OverviewTab({
           ))}
         </div>
       </Card>
-    </div>
-  );
-}
-
-// ============================================
-// Medical Records Tab
-// ============================================
-interface RecordsTabProps {
-  records: MedicalRecord[];
-}
-
-function RecordsTab({ records }: RecordsTabProps) {
-  const [filter, setFilter] = useState<string>("all");
-
-  const filteredRecords =
-    filter === "all" ? records : records.filter((r) => r.type === filter);
-
-  return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="font-lora text-3xl font-bold">Medical Records</h2>
-        <select
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          className="px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg font-mono text-sm"
-        >
-          <option value="all">All Records</option>
-          <option value="consultation">Consultations</option>
-          <option value="lab_result">Lab Results</option>
-          <option value="imaging">Imaging</option>
-          <option value="prescription">Prescriptions</option>
-          <option value="vaccination">Vaccinations</option>
-        </select>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4">
-        {filteredRecords.map((record) => (
-          <Card key={record.id} variant="default">
-            <div className="flex justify-between items-start">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <Badge
-                    variant={
-                      record.type === "lab_result" ? "danger" : "success"
-                    }
-                  >
-                    {record.type.replace("_", " ").toUpperCase()}
-                  </Badge>
-                  <span className="font-mono text-sm text-gray-400">
-                    {formatDate(record.date)}
-                  </span>
-                </div>
-                <h3 className="font-lora text-xl font-bold mb-2">
-                  {record.title}
-                </h3>
-                <p className="font-mono text-sm text-gray-400 mb-3">
-                  {record.description}
-                </p>
-                <p className="font-mono text-xs text-gray-500">
-                  Provider: {record.providerName}
-                </p>
-              </div>
-              <Button variant="secondary" size="sm">
-                View Details
-              </Button>
-            </div>
-          </Card>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ============================================
-// Appointments Tab
-// ============================================
-interface AppointmentsTabProps {
-  appointments: Appointment[];
-}
-
-function AppointmentsTab({ appointments }: AppointmentsTabProps) {
-  return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="font-lora text-3xl font-bold">Appointments</h2>
-        <Button variant="primary">📅 Book New Appointment</Button>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4">
-        {appointments.map((apt) => (
-          <Card
-            key={apt.id}
-            variant={apt.status === "scheduled" ? "green" : "default"}
-          >
-            <div className="flex justify-between items-start">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <Badge
-                    variant={
-                      apt.status === "completed"
-                        ? "success"
-                        : apt.status === "scheduled"
-                        ? "info"
-                        : "warning"
-                    }
-                  >
-                    {apt.status.toUpperCase()}
-                  </Badge>
-                  <Badge variant="info">{apt.type.replace("_", " ")}</Badge>
-                </div>
-                <h3 className="font-lora text-xl font-bold mb-2">
-                  {apt.providerName}
-                </h3>
-                <p className="font-mono text-sm text-gray-400 mb-2">
-                  {apt.providerSpecialty}
-                </p>
-                <p className="font-mono text-sm">
-                  📅 {new Date(apt.scheduledDate).toLocaleDateString()} at{" "}
-                  {new Date(apt.scheduledDate).toLocaleTimeString()}
-                </p>
-                <p className="font-mono text-sm text-gray-400 mt-2">
-                  Reason: {apt.reason}
-                </p>
-              </div>
-              <div className="flex flex-col gap-2">
-                {apt.status === "scheduled" && (
-                  <>
-                    <Button variant="success" size="sm">
-                      Confirm
-                    </Button>
-                    <Button variant="danger" size="sm">
-                      Cancel
-                    </Button>
-                  </>
-                )}
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ============================================
-// Consents Tab
-// ============================================
-interface ConsentsTabProps {
-  consents: Consent[];
-}
-
-function ConsentsTab({ consents }: ConsentsTabProps) {
-  return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="font-lora text-3xl font-bold">Access Consents</h2>
-        <Button variant="primary">+ Grant New Consent</Button>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4">
-        {consents.map((consent) => (
-          <Card key={consent.id} variant="orange">
-            <div className="flex justify-between items-start">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-3">
-                  <Badge
-                    variant={
-                      consent.status === "active"
-                        ? "success"
-                        : consent.status === "expired"
-                        ? "warning"
-                        : "danger"
-                    }
-                  >
-                    {consent.status.toUpperCase()}
-                  </Badge>
-                  {consent.emergencyAccess && (
-                    <Badge variant="danger">🆘 EMERGENCY</Badge>
-                  )}
-                </div>
-                <h3 className="font-lora text-xl font-bold mb-2">
-                  {consent.providerName}
-                </h3>
-                <p className="font-mono text-sm text-gray-400 mb-3">
-                  {consent.providerSpecialty}
-                </p>
-                <p className="font-mono text-sm mb-2">
-                  Purpose: {consent.purpose}
-                </p>
-                <div className="flex flex-wrap gap-2 mb-3">
-                  {consent.scopes.map((scope) => (
-                    <span
-                      key={scope}
-                      className="px-2 py-1 bg-afrihealth-green bg-opacity-20 text-afrihealth-green rounded text-xs font-mono"
-                    >
-                      {scope.replace("_", " ")}
-                    </span>
-                  ))}
-                </div>
-                <div className="text-xs font-mono text-gray-500">
-                  <p>Granted: {formatDate(consent.grantedAt)}</p>
-                  <p>Expires: {formatDate(consent.expiresAt)}</p>
-                </div>
-              </div>
-              <div className="flex flex-col gap-2">
-                {consent.status === "active" && (
-                  <>
-                    <Button variant="secondary" size="sm">
-                      Extend
-                    </Button>
-                    <Button variant="danger" size="sm">
-                      Revoke
-                    </Button>
-                  </>
-                )}
-                <Button variant="success" size="sm">
-                  View Logs
-                </Button>
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ============================================
-// Billing Tab
-// ============================================
-interface BillingTabProps {
-  bills: Bill[];
-}
-
-function BillingTab({ bills }: BillingTabProps) {
-  return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="font-lora text-3xl font-bold">Billing & Payments</h2>
-        <div className="flex gap-2">
-          <Button variant="secondary" size="sm">
-            Download Statement
-          </Button>
-          <Button variant="success" size="sm">
-            Payment History
-          </Button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4">
-        {bills.map((bill) => (
-          <Card
-            key={bill.id}
-            variant={
-              bill.status === "paid"
-                ? "green"
-                : bill.status === "pending_approval"
-                ? "orange"
-                : "default"
-            }
-          >
-            <div className="flex justify-between items-start">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-3">
-                  <Badge
-                    variant={
-                      bill.status === "paid"
-                        ? "success"
-                        : bill.status === "pending_approval"
-                        ? "warning"
-                        : "info"
-                    }
-                  >
-                    {bill.status.replace("_", " ").toUpperCase()}
-                  </Badge>
-                  <span className="font-mono text-sm text-gray-400">
-                    {bill.billNumber}
-                  </span>
-                </div>
-                <h3 className="font-lora text-2xl font-bold mb-2 text-afrihealth-orange">
-                  {formatCurrency(bill.totalAmount)}
-                </h3>
-                <p className="font-mono text-sm text-gray-400 mb-3">
-                  {bill.providerName}
-                </p>
-
-                {/* Bill Items */}
-                <div className="space-y-2 mb-3">
-                  {bill.items.map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex justify-between text-sm font-mono"
-                    >
-                      <span>
-                        {item.description} ({item.code})
-                      </span>
-                      <span>{formatCurrency(item.totalPrice)}</span>
-                    </div>
-                  ))}
-                </div>
-
-                {/* AI Recommendation */}
-                {bill.aiRecommendation && (
-                  <div className="p-3 bg-black bg-opacity-50 rounded mb-3">
-                    <p className="font-mono text-xs text-afrihealth-green mb-1">
-                      🤖 AI Recommendation:{" "}
-                      {bill.aiRecommendation.action.toUpperCase()}
-                    </p>
-                    <p className="font-mono text-xs text-gray-400">
-                      {bill.aiRecommendation.reason}
-                    </p>
-                    <p className="font-mono text-xs text-gray-500 mt-1">
-                      Confidence:{" "}
-                      {(bill.aiRecommendation.confidence * 100).toFixed(0)}%
-                    </p>
-                  </div>
-                )}
-
-                <div className="text-xs font-mono text-gray-500">
-                  <p>Due: {formatDate(bill.dueDate)}</p>
-                  {bill.paidDate && <p>Paid: {formatDate(bill.paidDate)}</p>}
-                </div>
-              </div>
-              <div className="flex flex-col gap-2">
-                {bill.status === "pending_approval" && (
-                  <>
-                    <Button variant="success" size="sm">
-                      ✓ Approve & Pay
-                    </Button>
-                    <Button variant="danger" size="sm">
-                      ✗ Decline
-                    </Button>
-                    <Button variant="secondary" size="sm">
-                      🤔 Review
-                    </Button>
-                  </>
-                )}
-                {bill.status === "paid" && (
-                  <Button variant="success" size="sm">
-                    📄 Receipt
-                  </Button>
-                )}
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ============================================
-// Insurance Tab
-// ============================================
-interface InsuranceTabProps {
-  claims: InsuranceClaim[];
-  stats: ReturnType<typeof getMockPatientStats>;
-}
-
-function InsuranceTab({ claims, stats }: InsuranceTabProps) {
-  return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="font-lora text-3xl font-bold">Insurance & Claims</h2>
-        <Button variant="primary">+ Submit New Claim</Button>
-      </div>
-
-      {/* Coverage Summary */}
-      <Card variant="green">
-        <h3 className="font-lora text-2xl font-bold mb-4">Coverage Summary</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div>
-            <p className="font-mono text-sm text-gray-400">Total Coverage</p>
-            <p className="font-lora text-2xl font-bold text-afrihealth-green">
-              {formatCurrency(stats.insuranceCoverage)}
-            </p>
-          </div>
-          <div>
-            <p className="font-mono text-sm text-gray-400">Claims Submitted</p>
-            <p className="font-lora text-2xl font-bold">
-              {stats.claimsSubmitted}
-            </p>
-          </div>
-          <div>
-            <p className="font-mono text-sm text-gray-400">Claims Approved</p>
-            <p className="font-lora text-2xl font-bold text-afrihealth-green">
-              {stats.claimsApproved}
-            </p>
-          </div>
-          <div>
-            <p className="font-mono text-sm text-gray-400">Approval Rate</p>
-            <p className="font-lora text-2xl font-bold">
-              {((stats.claimsApproved / stats.claimsSubmitted) * 100).toFixed(
-                0
-              )}
-              %
-            </p>
-          </div>
-        </div>
-      </Card>
-
-      {/* Claims List */}
-      <div className="grid grid-cols-1 gap-4">
-        {claims.map((claim) => (
-          <Card key={claim.id} variant="default">
-            <div className="flex justify-between items-start">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-3">
-                  <Badge
-                    variant={
-                      claim.status === "approved" || claim.status === "paid"
-                        ? "success"
-                        : claim.status === "denied"
-                        ? "danger"
-                        : "warning"
-                    }
-                  >
-                    {claim.status.replace("_", " ").toUpperCase()}
-                  </Badge>
-                  <span className="font-mono text-sm text-gray-400">
-                    {claim.claimNumber}
-                  </span>
-                </div>
-                <h3 className="font-lora text-xl font-bold mb-2">
-                  {formatCurrency(claim.claimedAmount)}
-                </h3>
-                <p className="font-mono text-sm text-gray-400 mb-2">
-                  Provider: {claim.providerName}
-                </p>
-                <p className="font-mono text-sm text-gray-400 mb-3">
-                  Submitted: {formatDate(claim.submittedDate)}
-                </p>
-                {claim.approvedAmount && (
-                  <p className="font-mono text-sm text-afrihealth-green mb-2">
-                    Approved: {formatCurrency(claim.approvedAmount)}
-                  </p>
-                )}
-                {claim.reviewerNotes && (
-                  <p className="font-mono text-xs text-gray-500">
-                    Note: {claim.reviewerNotes}
-                  </p>
-                )}
-              </div>
-              <Button variant="secondary" size="sm">
-                View Details
-              </Button>
-            </div>
-          </Card>
-        ))}
-      </div>
     </div>
   );
 }

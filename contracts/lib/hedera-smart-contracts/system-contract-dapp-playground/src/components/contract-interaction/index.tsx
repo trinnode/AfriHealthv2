@@ -243,7 +243,7 @@ const ContractInteraction = ({ contract }: PageProps) => {
       isLazy
       className="bg-panel rounded-xl max-w-4xl text-white border border-white/30 shadow-2xl text-lg"
     >
-      {/* @notice TokenAssociation IHRC719 does not need to deploy */}
+      {/* TokenAssociation IHRC719 does not need to deploy */}
       {isDeployed || contract.name === CONTRACT_NAMES.IHRC719 ? (
         <>
           {/* Tab headers */}

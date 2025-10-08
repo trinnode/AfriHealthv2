@@ -4,11 +4,11 @@ pragma solidity ^0.8.20;
 /**
  * @title AccessControlStorage
  * @dev EIP-7201 namespaced storage for AccessControlFacet
- * @notice Provides isolated storage for access control data
+ * Provides isolated storage for access control data
  */
 library AccessControlStorage {
     // Storage slot for access control data
-    bytes32 constant ACCESS_CONTROL_STORAGE_POSITION = 
+    bytes32 constant ACCESS_CONTROL_STORAGE_POSITION =
         keccak256("afrihealth.access.control.storage");
 
     struct Layout {
@@ -25,7 +25,11 @@ library AccessControlStorage {
      * @dev Get access control storage layout
      * layout Storage layout for access control
      */
-    function accessControlLayout() internal pure returns (Layout storage layout) {
+    function accessControlLayout()
+        internal
+        pure
+        returns (Layout storage layout)
+    {
         bytes32 position = ACCESS_CONTROL_STORAGE_POSITION;
         assembly {
             layout.slot := position

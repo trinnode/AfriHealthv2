@@ -232,7 +232,7 @@ const TokenPermission = ({ baseContract }: PageProps) => {
                 return record;
               });
 
-        // @notice `duplicated` is only true when `method` !== allowance
+        // `duplicated` is only true when `method` !== allowance
         if (!duplicated) {
           newRecords.push({
             status: 'success',

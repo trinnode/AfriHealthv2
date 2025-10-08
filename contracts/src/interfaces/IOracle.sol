@@ -6,7 +6,7 @@ pragma solidity ^0.8.20;
  * @dev Interface for oracle integration in AfriHealth Ledger
  */
 interface IOracle {
-    /// @notice Emitted when oracle data is requested
+    /// Emitted when oracle data is requested
     event OracleDataRequested(
         bytes32 indexed requestId,
         string dataType,
@@ -14,7 +14,7 @@ interface IOracle {
         address indexed requestedBy
     );
 
-    /// @notice Emitted when oracle data is received
+    /// Emitted when oracle data is received
     event OracleDataReceived(
         bytes32 indexed requestId,
         string dataType,
@@ -22,7 +22,7 @@ interface IOracle {
         uint256 receivedAt
     );
 
-    /// @notice Emitted when oracle response is processed
+    /// Emitted when oracle response is processed
     event OracleResponseProcessed(
         bytes32 indexed requestId,
         bool success,
@@ -30,14 +30,14 @@ interface IOracle {
         uint256 processedAt
     );
 
-    /// @notice Emitted when oracle source is updated
+    /// Emitted when oracle source is updated
     event OracleSourceUpdated(
         string dataType,
         string newSource,
         address indexed updatedBy
     );
 
-    /// @notice Request data from oracle
+    /// Request data from oracle
     /// @param dataType Type of data requested (e.g., "fx_rate", "medical_code")
     /// @param parameters Parameters for the request
     /// @return requestId Unique identifier for the request
@@ -46,12 +46,12 @@ interface IOracle {
         string calldata parameters
     ) external returns (bytes32 requestId);
 
-    /// @notice Fulfill oracle data request (oracle only)
+    /// Fulfill oracle data request (oracle only)
     /// @param requestId Request identifier
     /// @param data Oracle response data
     function fulfillData(bytes32 requestId, bytes calldata data) external;
 
-    /// @notice Get oracle data
+    /// Get oracle data
     /// @param dataType Type of data to get
     /// @param parameters Parameters for the request
     /// @return data Latest oracle data
@@ -61,7 +61,7 @@ interface IOracle {
         string calldata parameters
     ) external view returns (bytes memory data, uint256 timestamp);
 
-    /// @notice Get FX rate between currencies
+    /// Get FX rate between currencies
     /// @param fromCurrency Source currency code
     /// @param toCurrency Target currency code
     /// @return rate Exchange rate (18 decimal places)
@@ -71,7 +71,7 @@ interface IOracle {
         string calldata toCurrency
     ) external view returns (uint256 rate, uint256 timestamp);
 
-    /// @notice Check if medical code is valid/covered
+    /// Check if medical code is valid/covered
     /// @param code Medical code to check
     /// @param codeType Type of code (e.g., "CPT", "ICD10")
     /// @return isValid Whether code is valid
@@ -80,19 +80,27 @@ interface IOracle {
     function checkMedicalCode(
         string calldata code,
         string calldata codeType
-    ) external view returns (bool isValid, bool isCovered, uint256 coveragePercentage);
+    )
+        external
+        view
+        returns (bool isValid, bool isCovered, uint256 coveragePercentage);
 
-    /// @notice Update oracle source for a data type (admin only)
+    /// Update oracle source for a data type (admin only)
     /// @param dataType Type of data
     /// @param newSource New oracle source URL/endpoint
-    function updateOracleSource(string calldata dataType, string calldata newSource) external;
+    function updateOracleSource(
+        string calldata dataType,
+        string calldata newSource
+    ) external;
 
-    /// @notice Get oracle source for a data type
+    /// Get oracle source for a data type
     /// @param dataType Type of data
     /// @return source Oracle source URL/endpoint
-    function getOracleSource(string calldata dataType) external view returns (string memory source);
+    function getOracleSource(
+        string calldata dataType
+    ) external view returns (string memory source);
 
-    /// @notice Process oracle response and update stored data
+    /// Process oracle response and update stored data
     /// @param requestId Request identifier
     /// @param dataType Type of data
     /// @param data Oracle response data
@@ -104,29 +112,38 @@ interface IOracle {
         bytes calldata data
     ) external returns (bool success, string memory result);
 
-    /// @notice Get pending oracle requests
+    /// Get pending oracle requests
     /// @return requestIds Array of pending request identifiers
     /// @return dataTypes Array of data types requested
     /// @return parameters Array of request parameters
     /// @return requestedAts Array of request timestamps
-    function getPendingRequests() external view returns (
-        bytes32[] memory requestIds,
-        string[] memory dataTypes,
-        string[] memory parameters,
-        uint256[] memory requestedAts
-    );
+    function getPendingRequests()
+        external
+        view
+        returns (
+            bytes32[] memory requestIds,
+            string[] memory dataTypes,
+            string[] memory parameters,
+            uint256[] memory requestedAts
+        );
 
-    /// @notice Retry failed oracle request
+    /// Retry failed oracle request
     /// @param requestId Request identifier to retry
     function retryRequest(bytes32 requestId) external;
 
-    /// @notice Set oracle configuration (admin only)
+    /// Set oracle configuration (admin only)
     /// @param newTimeout New timeout for oracle requests
     /// @param newMaxRetries Maximum retry attempts
-    function setOracleConfig(uint256 newTimeout, uint256 newMaxRetries) external;
+    function setOracleConfig(
+        uint256 newTimeout,
+        uint256 newMaxRetries
+    ) external;
 
-    /// @notice Get current oracle configuration
+    /// Get current oracle configuration
     /// @return timeout Current timeout for requests
     /// @return maxRetries Maximum retry attempts
-    function getOracleConfig() external view returns (uint256 timeout, uint256 maxRetries);
+    function getOracleConfig()
+        external
+        view
+        returns (uint256 timeout, uint256 maxRetries);
 }

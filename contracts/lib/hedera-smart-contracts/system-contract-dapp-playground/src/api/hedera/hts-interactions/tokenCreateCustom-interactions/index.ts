@@ -146,7 +146,7 @@ export const createHederaFungibleToken = async (
 
     const { data } = txReceipt.logs.filter((event: any) => event.fragment.name === 'CreatedToken')[0];
 
-    // @notice since the returned `data` is 32 byte, convert it to the public 20-byte address standard
+    // since the returned `data` is 32 byte, convert it to the public 20-byte address standard
     const tokenAddress = `0x${data.slice(-40)}`;
 
     return { tokenAddress, transactionHash: txReceipt.hash };
@@ -257,7 +257,7 @@ export const createHederaNonFungibleToken = async (
 
     const { data } = txReceipt.logs.filter((event: any) => event.fragment.name === 'CreatedToken')[0];
 
-    // @notice since the returned `data` is 32 byte, convert it to the public 20-byte address standard
+    // since the returned `data` is 32 byte, convert it to the public 20-byte address standard
     const tokenAddress = `0x${data.slice(-40)}`;
 
     return { tokenAddress, transactionHash: txReceipt.hash };

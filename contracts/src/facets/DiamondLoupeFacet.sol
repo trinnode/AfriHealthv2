@@ -9,18 +9,18 @@ import "../utils/Pausable.sol";
 /**
  * @title DiamondLoupeFacet
  * @dev Facet for diamond introspection (EIP-2535 Loupe functions)
- * @notice Provides read-only functions to inspect the diamond
+ * Provides read-only functions to inspect the diamond
  */
 contract DiamondLoupeFacet is ReentrancyGuard, Pausable {
     using DiamondStorage for DiamondStorage.DiamondStorageStruct;
 
-    /// @notice Facet structure
+    /// Facet structure
     struct Facet {
         address facetAddress;
         bytes4[] functionSelectors;
     }
 
-    /// @notice Get all facets and their selectors
+    /// Get all facets and their selectors
     function facets() external view returns (Facet[] memory facets_) {
         DiamondStorage.DiamondStorageStruct storage ds = DiamondStorage
             .diamondStorage();
@@ -44,12 +44,7 @@ contract DiamondLoupeFacet is ReentrancyGuard, Pausable {
         view
         returns (address[] memory facetAddresses_)
     {
-        DiamondStorage.DiamondStorageStruct storage ds = DiamondStorage
-            .diamondStorage();
-
-        // This would need to be implemented with proper facet tracking
-        // For now, return empty array
-        facetAddresses_ = new address[](0);
+        return DiamondStorage.getAllFacetAddresses();
     }
 
     function facetAddress(
@@ -108,9 +103,7 @@ contract DiamondLoupeFacet is ReentrancyGuard, Pausable {
         view
         returns (bytes4[] memory selectors)
     {
-        // This would need to be implemented with proper selector tracking
-        // For now, return empty array
-        return new bytes4[](0);
+        return DiamondStorage.getAllSelectors();
     }
 
     /**

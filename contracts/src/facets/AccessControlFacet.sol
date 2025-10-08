@@ -20,7 +20,7 @@ contract AccessControlFacet is IAccessControl, ReentrancyGuard, Pausable {
     bytes32 public constant INSURER_ROLE = keccak256("INSURER_ROLE");
     bytes32 public constant ARBITRATOR_ROLE = keccak256("ARBITRATOR_ROLE");
 
-    /// @notice Storage structure for access control data
+    /// Storage structure for access control data
     struct AccessControlStorage {
         mapping(bytes32 => mapping(address => bool)) roleMembers;
         mapping(address => bytes32[]) userRoles;
@@ -28,7 +28,7 @@ contract AccessControlFacet is IAccessControl, ReentrancyGuard, Pausable {
         mapping(bytes32 => uint256) roleMemberCount;
     }
 
-    /// @notice Emergency access structure
+    /// Emergency access structure
     struct EmergencyAccess {
         string reason;
         uint256 grantedAt;
@@ -37,14 +37,18 @@ contract AccessControlFacet is IAccessControl, ReentrancyGuard, Pausable {
         bool isActive;
     }
 
-    /// @notice Storage position for access control data
+    /// Storage position for access control data
     bytes32 constant ACCESS_CONTROL_STORAGE_POSITION =
         keccak256("diamond.accesscontrol.storage");
 
     /**
      * @dev Get access control storage
      */
-    function getAccessControlStorage() internal pure returns (AccessControlStorage storage acs) {
+    function getAccessControlStorage()
+        internal
+        pure
+        returns (AccessControlStorage storage acs)
+    {
         bytes32 position = ACCESS_CONTROL_STORAGE_POSITION;
         assembly {
             acs.slot := position
@@ -58,19 +62,31 @@ contract AccessControlFacet is IAccessControl, ReentrancyGuard, Pausable {
 
     /// @inheritdoc IAccessControl
     function grantRole(bytes32 role, address account) external nonReentrant {
-        require(hasRole(ADMIN_ROLE, msg.sender), "AccessControl: must have admin role");
+        require(
+            hasRole(ADMIN_ROLE, msg.sender),
+            "AccessControl: must have admin role"
+        );
         _grantRole(role, account);
     }
 
     /// @inheritdoc IAccessControl
     function revokeRole(bytes32 role, address account) external nonReentrant {
-        require(hasRole(ADMIN_ROLE, msg.sender), "AccessControl: must have admin role");
+        require(
+            hasRole(ADMIN_ROLE, msg.sender),
+            "AccessControl: must have admin role"
+        );
         _revokeRole(role, account);
     }
 
     /// @inheritdoc IAccessControl
-    function grantRoles(bytes32[] calldata roles, address account) external nonReentrant {
-        require(hasRole(ADMIN_ROLE, msg.sender), "AccessControl: must have admin role");
+    function grantRoles(
+        bytes32[] calldata roles,
+        address account
+    ) external nonReentrant {
+        require(
+            hasRole(ADMIN_ROLE, msg.sender),
+            "AccessControl: must have admin role"
+        );
         for (uint256 i = 0; i < roles.length; i++) {
             _grantRole(roles[i], account);
         }
@@ -83,7 +99,9 @@ contract AccessControlFacet is IAccessControl, ReentrancyGuard, Pausable {
     }
 
     /// @inheritdoc IAccessControl
-    function getUserRoles(address account) external view returns (bytes32[] memory) {
+    function getUserRoles(
+        address account
+    ) external view returns (bytes32[] memory) {
         AccessControlStorage storage acs = getAccessControlStorage();
         return acs.userRoles[account];
     }
@@ -101,7 +119,10 @@ contract AccessControlFacet is IAccessControl, ReentrancyGuard, Pausable {
         string calldata reason,
         uint256 duration
     ) external nonReentrant {
-        require(hasRole(ADMIN_ROLE, msg.sender), "AccessControl: must have admin role");
+        require(
+            hasRole(ADMIN_ROLE, msg.sender),
+            "AccessControl: must have admin role"
+        );
         AccessControlStorage storage acs = getAccessControlStorage();
 
         acs.emergencyAccess[patient][provider] = EmergencyAccess({
@@ -112,11 +133,20 @@ contract AccessControlFacet is IAccessControl, ReentrancyGuard, Pausable {
             isActive: true
         });
 
-        emit EmergencyAccessGranted(patient, provider, reason, block.timestamp + duration, msg.sender);
+        emit EmergencyAccessGranted(
+            patient,
+            provider,
+            reason,
+            block.timestamp + duration,
+            msg.sender
+        );
     }
 
     /// @inheritdoc IAccessControl
-    function hasEmergencyAccess(address patient, address provider) external view returns (bool hasAccess, uint256 expiresAt) {
+    function hasEmergencyAccess(
+        address patient,
+        address provider
+    ) external view returns (bool hasAccess, uint256 expiresAt) {
         AccessControlStorage storage acs = getAccessControlStorage();
         EmergencyAccess memory access = acs.emergencyAccess[patient][provider];
 
@@ -128,8 +158,14 @@ contract AccessControlFacet is IAccessControl, ReentrancyGuard, Pausable {
     }
 
     /// @inheritdoc IAccessControl
-    function revokeEmergencyAccess(address patient, address provider) external nonReentrant {
-        require(hasRole(ADMIN_ROLE, msg.sender), "AccessControl: must have admin role");
+    function revokeEmergencyAccess(
+        address patient,
+        address provider
+    ) external nonReentrant {
+        require(
+            hasRole(ADMIN_ROLE, msg.sender),
+            "AccessControl: must have admin role"
+        );
         AccessControlStorage storage acs = getAccessControlStorage();
         acs.emergencyAccess[patient][provider].isActive = false;
 
@@ -140,20 +176,42 @@ contract AccessControlFacet is IAccessControl, ReentrancyGuard, Pausable {
     function getEmergencyAccessDetails(
         address patient,
         address provider
-    ) external view returns (string memory reason, uint256 grantedAt, uint256 expiresAt, address grantedBy) {
+    )
+        external
+        view
+        returns (
+            string memory reason,
+            uint256 grantedAt,
+            uint256 expiresAt,
+            address grantedBy
+        )
+    {
         AccessControlStorage storage acs = getAccessControlStorage();
         EmergencyAccess memory access = acs.emergencyAccess[patient][provider];
 
-        return (access.reason, access.grantedAt, access.expiresAt, access.grantedBy);
+        return (
+            access.reason,
+            access.grantedAt,
+            access.expiresAt,
+            access.grantedBy
+        );
     }
 
     /// @inheritdoc IAccessControl
-    function invokeEmergencyAccess(address patient, string calldata reason) external override(IAccessControl) nonReentrant {
+    function invokeEmergencyAccess(
+        address patient,
+        string calldata reason
+    ) external override(IAccessControl) nonReentrant {
         AccessControlStorage storage acs = getAccessControlStorage();
-        EmergencyAccess storage access = acs.emergencyAccess[patient][msg.sender];
+        EmergencyAccess storage access = acs.emergencyAccess[patient][
+            msg.sender
+        ];
 
         require(access.isActive, "AccessControl: no emergency access");
-        require(block.timestamp < access.expiresAt, "AccessControl: emergency access expired");
+        require(
+            block.timestamp < access.expiresAt,
+            "AccessControl: emergency access expired"
+        );
 
         emit EmergencyAccessInvoked(patient, msg.sender, reason, msg.sender);
     }
@@ -202,7 +260,10 @@ contract AccessControlFacet is IAccessControl, ReentrancyGuard, Pausable {
      * @dev Initialize access control system
      */
     function initializeAccessControlSystem() external {
-        require(hasRole(ADMIN_ROLE, msg.sender), "AccessControl: must have admin role");
+        require(
+            hasRole(ADMIN_ROLE, msg.sender),
+            "AccessControl: must have admin role"
+        );
         // Initialize with default roles and permissions
         // Set up role hierarchy and permissions
     }

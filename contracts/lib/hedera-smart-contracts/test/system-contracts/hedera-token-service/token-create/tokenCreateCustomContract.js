@@ -95,7 +95,7 @@ describe('TokenCreateCustomContract Test Suite', () => {
   });
 
   it('should be able to create fungible token with dynamic params and empty keys array', async () => {
-    // @notice: Only the ID of the smart contract is valid for the treasury by default.
+    //: Only the ID of the smart contract is valid for the treasury by default.
     //          Any account other than the smart contract ID must first sign an AccountUpdate transaction
     //          before being eligible to be elected as the token's treasury account.
     //          For a practical example, refer to `utils.updateAccountKeysViaHapi()`.
@@ -346,8 +346,8 @@ describe('TokenCreateCustomContract Test Suite', () => {
     });
 
     it('should be able to execute associateTokensPublic', async function () {
-      // @notice the provided associating account must sign an updateAccountKeys transaction first.
-      // @notice see https://github.com/hashgraph/hedera-smart-contracts/blob/main/contracts/system-contracts/hedera-token-service/HederaTokenService.sol#L98
+      // the provided associating account must sign an updateAccountKeys transaction first.
+      // see https://github.com/hashgraph/hedera-smart-contracts/blob/main/contracts/system-contracts/hedera-token-service/HederaTokenService.sol#L98
       //         for more information on precompiled HTS.associateTokens()
       await utils.updateAccountKeysViaHapi([
         await tokenCreateCustomContract.getAddress(),
@@ -367,8 +367,8 @@ describe('TokenCreateCustomContract Test Suite', () => {
     });
 
     it('should be able to execute associateTokenPublic', async function () {
-      // @notice the provided associating account must sign the transaction first.
-      // @notice see https://github.com/hashgraph/hedera-smart-contracts/blob/main/contracts/system-contracts/hedera-token-service/HederaTokenService.sol#L105
+      // the provided associating account must sign the transaction first.
+      // see https://github.com/hashgraph/hedera-smart-contracts/blob/main/contracts/system-contracts/hedera-token-service/HederaTokenService.sol#L105
       //         for more information on precompiled HTS.associateToken()
       await utils.updateAccountKeysViaHapi([
         await tokenCreateCustomContract.getAddress(),
@@ -388,10 +388,10 @@ describe('TokenCreateCustomContract Test Suite', () => {
     });
 
     it('should be able to execute grantTokenKyc', async function () {
-      // @notice: The ID of the smart contract is set as the account receiving KYC for testing purpose.
+      //: The ID of the smart contract is set as the account receiving KYC for testing purpose.
       //          Any account other than the smart contract ID must first get associated with the token first.
       //
-      // @notice  see https://github.com/hashgraph/hedera-smart-contracts/blob/main/contracts/system-contracts/hedera-token-service/HederaTokenService.sol#L399
+      //  see https://github.com/hashgraph/hedera-smart-contracts/blob/main/contracts/system-contracts/hedera-token-service/HederaTokenService.sol#L399
       //          for more information on precompiled HTS.associateToken()
       const tx = await tokenCreateCustomContract.grantTokenKycPublic(
         prepFungibleTokenAddress,
@@ -408,7 +408,7 @@ describe('TokenCreateCustomContract Test Suite', () => {
   });
 
   it("should fail when token create has missing treasury's signature in transaction", async () => {
-    // @notice: Only the ID of the smart contract is valid for the treasury by default.
+    //: Only the ID of the smart contract is valid for the treasury by default.
     //          Any account other than the smart contract ID must first sign an AccountUpdate transaction
     //          before being eligible to be elected as the token's treasury account.
     //          For a practical example, refer to `utils.updateAccountKeysViaHapi()`.
@@ -438,7 +438,7 @@ describe('TokenCreateCustomContract Test Suite', () => {
   });
 
   it("should pass when token create has the correct treasury's signature in transaction", async () => {
-    // @notice the treasury account must sign the transaction first.
+    // the treasury account must sign the transaction first.
     await utils.updateAccountKeysViaHapi([
       await tokenCreateCustomContract.getAddress(),
     ]);

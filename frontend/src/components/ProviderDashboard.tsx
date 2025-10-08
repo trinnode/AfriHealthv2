@@ -6,13 +6,17 @@ import {
   getMockProviderStats,
   getMockAppointments,
   getMockMedicalRecords,
-  getMockBills,
-  getMockConsents,
   getMockPatients,
   formatDate,
   formatCurrency,
 } from "../services/mockDataService";
 import type { PatientListItem } from "../types";
+
+// Import new contract-based components
+import { InvoiceManagement } from "./billing/InvoiceManagement";
+import { ClaimsManagement } from "./claims/ClaimsManagement";
+import { ConsentManagement } from "./consent/ConsentManagement";
+import { MedicalRecords } from "./records/MedicalRecords";
 
 type TabName =
   | "overview"
@@ -20,6 +24,7 @@ type TabName =
   | "appointments"
   | "records"
   | "billing"
+  | "claims"
   | "consents"
   | "profile";
 
@@ -77,23 +82,11 @@ export default function ProviderDashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPatient, setSelectedPatient] =
     useState<PatientListItem | null>(null);
-  const [newRecordData, setNewRecordData] = useState({
-    diagnosis: "",
-    treatment: "",
-    notes: "",
-  });
-  const [newBillData, setNewBillData] = useState({
-    description: "",
-    amount: "",
-    dueDate: "",
-  });
 
-  // Load mock data
+  // Load mock data (for overview and patients only)
   const stats = getMockProviderStats();
   const appointments = getMockAppointments();
   const records = getMockMedicalRecords();
-  const bills = getMockBills();
-  const consents = getMockConsents();
   const patients = getMockPatients();
 
   // Filter data based on search
@@ -107,8 +100,9 @@ export default function ProviderDashboard() {
     { id: "overview", label: "Overview", icon: "📊" },
     { id: "patients", label: "Patients", icon: "👥" },
     { id: "appointments", label: "Appointments", icon: "📅" },
-    { id: "records", label: "Medical Records", icon: "📋" },
+    { id: "records", label: "Patient Records", icon: "📋" },
     { id: "billing", label: "Billing", icon: "💰" },
+    { id: "claims", label: "Claims Review", icon: "🏥" },
     { id: "consents", label: "Consents", icon: "🔐" },
     { id: "profile", label: "Profile", icon: "👤" },
   ];
@@ -522,282 +516,48 @@ export default function ProviderDashboard() {
         );
 
       case "records":
-        return (
-          <div className="space-y-6">
-            {/* Create New Record */}
+        return accountId && selectedPatient ? (
+          <div className="space-y-4">
             <Card>
-              <h2 className="font-lora text-2xl font-bold mb-4">
-                📋 Create Medical Record
-              </h2>
-              <div className="space-y-4">
-                <Input
-                  placeholder="Diagnosis"
-                  value={newRecordData.diagnosis}
-                  onChange={(e) =>
-                    setNewRecordData({
-                      ...newRecordData,
-                      diagnosis: e.target.value,
-                    })
-                  }
-                />
-                <Input
-                  placeholder="Treatment Plan"
-                  value={newRecordData.treatment}
-                  onChange={(e) =>
-                    setNewRecordData({
-                      ...newRecordData,
-                      treatment: e.target.value,
-                    })
-                  }
-                />
-                <textarea
-                  placeholder="Clinical Notes..."
-                  value={newRecordData.notes}
-                  onChange={(e) =>
-                    setNewRecordData({
-                      ...newRecordData,
-                      notes: e.target.value,
-                    })
-                  }
-                  className="w-full bg-black border-2 border-gray-800 rounded-lg p-3 font-mono text-sm focus:border-afrihealth-orange focus:outline-none"
-                  rows={4}
-                />
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-lora text-2xl font-bold">
+                  Patient Records
+                </h2>
                 <Button
-                  onClick={() => {
-                    alert("Record created successfully!");
-                    setNewRecordData({
-                      diagnosis: "",
-                      treatment: "",
-                      notes: "",
-                    });
-                  }}
-                  className="w-full"
+                  variant="secondary"
+                  onClick={() => setSelectedPatient(null)}
                 >
-                  Create Record on Hedera
+                  ← Back to Patients
                 </Button>
               </div>
+              <MedicalRecords patientId={selectedPatient.accountId} />
             </Card>
-
-            {/* Existing Records */}
-            <Card>
-              <h2 className="font-lora text-2xl font-bold mb-4">
-                📚 Recent Records
-              </h2>
-              <div className="space-y-3">
-                {records.map((record) => (
-                  <motion.div
-                    key={record.id}
-                    whileHover={{ x: 4 }}
-                    className="p-4 bg-gray-900 rounded-lg border border-gray-800"
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1">
-                        <p className="font-mono font-bold text-lg mb-1">
-                          {record.title}
-                        </p>
-                        <p className="text-sm text-gray-400">
-                          Diagnosis:{" "}
-                          <span className="text-afrihealth-orange">
-                            {record.diagnosis?.[0] || "N/A"}
-                          </span>
-                        </p>
-                      </div>
-                      <Badge variant="info">{record.type}</Badge>
-                    </div>
-                    <div className="bg-black p-3 rounded-lg mb-3">
-                      <p className="font-mono text-sm text-gray-300">
-                        {record.description}
-                      </p>
-                    </div>
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-gray-500 font-mono">
-                        Provider: {record.providerId}
-                      </span>
-                      <span className="text-afrihealth-green font-mono">
-                        {formatDate(record.date)}
-                      </span>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </Card>
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <p className="text-gray-400 mb-4">
+              Select a patient to view their medical records
+            </p>
+            <Button onClick={() => setActiveTab("patients")}>
+              View Patients
+            </Button>
           </div>
         );
 
       case "billing":
-        return (
-          <div className="space-y-6">
-            {/* Create New Bill */}
-            <Card>
-              <h2 className="font-lora text-2xl font-bold mb-4">
-                💰 Create Bill
-              </h2>
-              <div className="space-y-4">
-                <Input
-                  placeholder="Service Description"
-                  value={newBillData.description}
-                  onChange={(e) =>
-                    setNewBillData({
-                      ...newBillData,
-                      description: e.target.value,
-                    })
-                  }
-                />
-                <Input
-                  placeholder="Amount (e.g., 150.00)"
-                  type="number"
-                  value={newBillData.amount}
-                  onChange={(e) =>
-                    setNewBillData({ ...newBillData, amount: e.target.value })
-                  }
-                />
-                <Input
-                  placeholder="Due Date"
-                  type="date"
-                  value={newBillData.dueDate}
-                  onChange={(e) =>
-                    setNewBillData({ ...newBillData, dueDate: e.target.value })
-                  }
-                />
-                <Button
-                  onClick={() => {
-                    alert(
-                      `Bill created: ${newBillData.description} - $${newBillData.amount}`
-                    );
-                    setNewBillData({
-                      description: "",
-                      amount: "",
-                      dueDate: "",
-                    });
-                  }}
-                  className="w-full"
-                >
-                  Create Bill on Hedera
-                </Button>
-              </div>
-            </Card>
+        return accountId ? (
+          <InvoiceManagement accountId={accountId} isProvider={true} />
+        ) : null;
 
-            {/* Existing Bills */}
-            <Card>
-              <h2 className="font-lora text-2xl font-bold mb-4">
-                📊 Recent Bills
-              </h2>
-              <div className="space-y-3">
-                {bills.map((bill) => (
-                  <motion.div
-                    key={bill.id}
-                    whileHover={{ x: 4 }}
-                    className="p-4 bg-gray-900 rounded-lg border border-gray-800"
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex-1">
-                        <p className="font-mono font-bold text-lg">
-                          {bill.items[0]?.description || "Service"}
-                        </p>
-                        <p className="text-sm text-gray-400">
-                          Patient: {bill.patientName}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-lora text-2xl font-bold text-afrihealth-orange">
-                          {formatCurrency(bill.totalAmount)}
-                        </p>
-                        <Badge
-                          variant={
-                            bill.status === "paid"
-                              ? "success"
-                              : bill.status === "pending_approval"
-                              ? "info"
-                              : "danger"
-                          }
-                        >
-                          {bill.status}
-                        </Badge>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between text-xs mt-3 pt-3 border-t border-gray-800">
-                      <span className="text-gray-500 font-mono">
-                        Issued: {formatDate(bill.createdAt)}
-                      </span>
-                      <span className="text-gray-500 font-mono">
-                        Due: {formatDate(bill.dueDate)}
-                      </span>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </Card>
-          </div>
-        );
+      case "claims":
+        return accountId ? (
+          <ClaimsManagement accountId={accountId} isReviewer={true} />
+        ) : null;
 
       case "consents":
-        return (
-          <div className="space-y-6">
-            <Card>
-              <h2 className="font-lora text-2xl font-bold mb-4">
-                🔐 Patient Consents
-              </h2>
-              <p className="text-sm text-gray-400 mb-4">
-                Manage data access permissions from your patients
-              </p>
-              <div className="space-y-3">
-                {consents.map((consent) => (
-                  <motion.div
-                    key={consent.id}
-                    whileHover={{ x: 4 }}
-                    className="p-4 bg-gray-900 rounded-lg border border-gray-800"
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1">
-                        <p className="font-mono font-bold text-lg mb-1">
-                          Patient: {consent.patientId}
-                        </p>
-                        <p className="text-sm text-gray-400">
-                          Access Type:{" "}
-                          <span className="text-afrihealth-orange">
-                            {consent.scopes.join(", ")}
-                          </span>
-                        </p>
-                      </div>
-                      <Badge
-                        variant={
-                          consent.status === "active" ? "success" : "danger"
-                        }
-                      >
-                        {consent.status}
-                      </Badge>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 text-xs mb-3">
-                      <div>
-                        <p className="text-gray-500">Granted</p>
-                        <p className="font-mono">
-                          {formatDate(consent.grantedAt)}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-gray-500">Expires</p>
-                        <p className="font-mono">
-                          {formatDate(consent.expiresAt)}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button size="sm">View Details</Button>
-                      {consent.status === "active" && (
-                        <Button
-                          size="sm"
-                          onClick={() => alert("Request renewal")}
-                        >
-                          Request Renewal
-                        </Button>
-                      )}
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </Card>
-          </div>
-        );
+        return accountId ? (
+          <ConsentManagement accountId={accountId} isProvider={true} />
+        ) : null;
 
       case "profile":
         return (
@@ -969,15 +729,15 @@ export default function ProviderDashboard() {
       <div className="max-w-7xl mx-auto">
         <AnimatePresence mode="wait">
           <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          transition={{ duration: 0.2 }}
-        >
-          {renderTabContent()}
-        </motion.div>
-      </AnimatePresence>
+            key={activeTab}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.2 }}
+          >
+            {renderTabContent()}
+          </motion.div>
+        </AnimatePresence>
       </div>
     </div>
   );

@@ -22,7 +22,7 @@ import { ethers } from 'ethers';
 import { HEDERA_SHARED_PARAM_INPUT_FIELDS } from '@/utils/common/constants';
 
 /**
- * @notice an object to map key type to the specific bit value
+ * an object to map key type to the specific bit value
  *
  * @see https://github.com/hashgraph/hedera-smart-contracts/blob/main/contracts/system-contracts/hedera-token-service/IHederaTokenService.sol#L128C22-L128C22
  */
@@ -37,7 +37,7 @@ export const KEY_TYPE_MAP: Record<IHederaTokenServiceKeyType, IHederaTokenServic
 };
 
 /**
- * @notice an object of the keyValue's default values which conform to IHederaTokenService.KeyValue
+ * an object of the keyValue's default values which conform to IHederaTokenService.KeyValue
  */
 export const DEFAULT_IHTS_KEY_VALUE: IHederaTokenServiceKeyValue = {
   inheritAccountKey: false,
@@ -48,7 +48,7 @@ export const DEFAULT_IHTS_KEY_VALUE: IHederaTokenServiceKeyValue = {
 };
 
 /**
- * @notice an object that holds constant values for the parameters used in token creation.
+ * an object that holds constant values for the parameters used in token creation.
  */
 export const htsTokenCreateParamFields = {
   name: {
@@ -131,7 +131,7 @@ export const htsTokenCreateParamFields = {
 };
 
 /**
- * @notice an object that holds constant values for the parameters used in token mint.
+ * an object that holds constant values for the parameters used in token mint.
  */
 export const htsTokenMintParamFields = {
   tokenAddressToMint: {

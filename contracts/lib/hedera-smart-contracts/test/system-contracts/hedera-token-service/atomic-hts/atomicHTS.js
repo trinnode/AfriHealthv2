@@ -59,7 +59,7 @@ describe('AtomicHTS - HIP#551: Batch Transactions Test Suite', () => {
       await tokenTransferContract.getAddress(),
     ]);
 
-    // @notice tokenCreateContract.createFungibleTokenPublic() will generate an intial amount of 1000 tokens
+    // tokenCreateContract.createFungibleTokenPublic() will generate an intial amount of 1000 tokens
     // to the treasury at the smart contract level
     tokenAddress = await utils.createFungibleTokenWithSECP256K1AdminKey(
       tokenCreateContract,

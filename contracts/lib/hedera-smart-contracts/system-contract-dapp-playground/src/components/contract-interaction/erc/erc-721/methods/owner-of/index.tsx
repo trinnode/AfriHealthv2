@@ -74,7 +74,7 @@ const ERC721OwnerOf = ({ baseContract }: PageProps) => {
   }, [toaster, transactionResultStorageKey]);
 
   /** @dev handle executing erc721OwnerOf */
-  /** @notice wrapping handleExecuteOwnerOf in useCallback hook to prevent excessive re-renders */
+  /** wrapping handleExecuteOwnerOf in useCallback hook to prevent excessive re-renders */
   const handleExecuteOwnerOf = useCallback(
     async (tokenIdValue: number, refreshMode?: boolean) => {
       /// sanitize params

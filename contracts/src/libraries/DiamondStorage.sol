@@ -18,6 +18,14 @@ library DiamondStorage {
         mapping(address => uint256) facetSelectorCount;
         // Array of selectors for each facet
         mapping(address => bytes4[]) facetSelectors;
+        // Array of all facet addresses
+        address[] facetAddressList;
+        // Mapping to check if facet is already in the list
+        mapping(address => bool) facetExists;
+        // Array of all function selectors
+        bytes4[] allSelectors;
+        // Mapping to check if selector is already in the list
+        mapping(bytes4 => bool) selectorExists;
         // Contract owner
         address contractOwner;
         // Diamond cut facet address
@@ -32,7 +40,11 @@ library DiamondStorage {
      * @dev Get diamond storage
      * @return ds Diamond storage reference
      */
-    function diamondStorage() internal pure returns (DiamondStorageStruct storage ds) {
+    function diamondStorage()
+        internal
+        pure
+        returns (DiamondStorageStruct storage ds)
+    {
         bytes32 position = DIAMOND_STORAGE_POSITION;
         assembly {
             ds.slot := position
@@ -54,11 +66,12 @@ library DiamondStorage {
      * @param selector Function selector
      * @return facet Facet address
      */
-    function getFacetAddress(bytes4 selector) internal view returns (address facet) {
+    function getFacetAddress(
+        bytes4 selector
+    ) internal view returns (address facet) {
         DiamondStorageStruct storage ds = diamondStorage();
         facet = ds.selectorToFacet[selector];
     }
-    
 
     /**
      * @dev Add function selector to facet
@@ -69,6 +82,18 @@ library DiamondStorage {
         DiamondStorageStruct storage ds = diamondStorage();
         ds.facetSelectors[facet].push(selector);
         ds.facetSelectorCount[facet]++;
+
+        // Track facet if new
+        if (!ds.facetExists[facet]) {
+            ds.facetAddressList.push(facet);
+            ds.facetExists[facet] = true;
+        }
+
+        // Track selector if new
+        if (!ds.selectorExists[selector]) {
+            ds.allSelectors.push(selector);
+            ds.selectorExists[selector] = true;
+        }
     }
 
     /**
@@ -79,7 +104,7 @@ library DiamondStorage {
     function removeSelectorFromFacet(address facet, bytes4 selector) internal {
         DiamondStorageStruct storage ds = diamondStorage();
 
-        // Find and remove selector from array
+        // Find and remove selector from facet array
         bytes4[] storage selectors = ds.facetSelectors[facet];
         for (uint256 i = 0; i < selectors.length; i++) {
             if (selectors[i] == selector) {
@@ -90,6 +115,32 @@ library DiamondStorage {
         }
 
         ds.facetSelectorCount[facet]--;
+
+        // Remove facet from list if no more selectors
+        if (ds.facetSelectorCount[facet] == 0 && ds.facetExists[facet]) {
+            address[] storage facetList = ds.facetAddressList;
+            for (uint256 i = 0; i < facetList.length; i++) {
+                if (facetList[i] == facet) {
+                    facetList[i] = facetList[facetList.length - 1];
+                    facetList.pop();
+                    break;
+                }
+            }
+            ds.facetExists[facet] = false;
+        }
+
+        // Mark selector as removed from tracking
+        ds.selectorExists[selector] = false;
+
+        // Remove selector from global list
+        bytes4[] storage allSels = ds.allSelectors;
+        for (uint256 i = 0; i < allSels.length; i++) {
+            if (allSels[i] == selector) {
+                allSels[i] = allSels[allSels.length - 1];
+                allSels.pop();
+                break;
+            }
+        }
     }
 
     /**
@@ -97,7 +148,9 @@ library DiamondStorage {
      * @param facet Facet address
      * @return selectors Array of function selectors
      */
-    function getFacetSelectors(address facet) internal view returns (bytes4[] memory selectors) {
+    function getFacetSelectors(
+        address facet
+    ) internal view returns (bytes4[] memory selectors) {
         DiamondStorageStruct storage ds = diamondStorage();
         selectors = ds.facetSelectors[facet];
     }
@@ -107,7 +160,9 @@ library DiamondStorage {
      * @param facet Facet address
      * @return count Number of selectors
      */
-    function getFacetSelectorCount(address facet) internal view returns (uint256 count) {
+    function getFacetSelectorCount(
+        address facet
+    ) internal view returns (uint256 count) {
         DiamondStorageStruct storage ds = diamondStorage();
         count = ds.facetSelectorCount[facet];
     }
@@ -191,5 +246,23 @@ library DiamondStorage {
     function isPaused() internal view returns (bool) {
         DiamondStorageStruct storage ds = diamondStorage();
         return ds.paused || ds.emergencyPaused;
+    }
+
+    /**
+     * @dev Get all facet addresses
+     * @return Array of all facet addresses
+     */
+    function getAllFacetAddresses() internal view returns (address[] memory) {
+        DiamondStorageStruct storage ds = diamondStorage();
+        return ds.facetAddressList;
+    }
+
+    /**
+     * @dev Get all function selectors
+     * @return Array of all function selectors
+     */
+    function getAllSelectors() internal view returns (bytes4[] memory) {
+        DiamondStorageStruct storage ds = diamondStorage();
+        return ds.allSelectors;
     }
 }

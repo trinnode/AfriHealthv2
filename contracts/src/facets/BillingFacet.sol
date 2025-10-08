@@ -15,7 +15,7 @@ import "../utils/IdGenerator.sol";
 contract BillingFacet is IBilling, AccessControl, ReentrancyGuard, Pausable {
     using DiamondStorage for DiamondStorage.DiamondStorageStruct;
 
-    /// @notice Storage structure for billing data
+    /// Storage structure for billing data
     struct BillingStorage {
         mapping(bytes32 => Invoice) invoices;
         mapping(address => bytes32[]) patientInvoices;
@@ -25,7 +25,7 @@ contract BillingFacet is IBilling, AccessControl, ReentrancyGuard, Pausable {
         mapping(string => bool) currencySupported;
     }
 
-    /// @notice Invoice structure
+    /// Invoice structure
     struct Invoice {
         bytes32 invoiceId;
         address patient;
@@ -40,7 +40,7 @@ contract BillingFacet is IBilling, AccessControl, ReentrancyGuard, Pausable {
         uint256 approvedAt;
     }
 
-    /// @notice Payment structure
+    /// Payment structure
     struct Payment {
         uint256 amount;
         string currency;
@@ -48,14 +48,18 @@ contract BillingFacet is IBilling, AccessControl, ReentrancyGuard, Pausable {
         bytes32 transactionHash;
     }
 
-    /// @notice Storage position for billing data
+    /// Storage position for billing data
     bytes32 constant BILLING_STORAGE_POSITION =
         keccak256("diamond.billing.storage");
 
     /**
      * @dev Get billing storage
      */
-    function getBillingStorage() internal pure returns (BillingStorage storage bs) {
+    function getBillingStorage()
+        internal
+        pure
+        returns (BillingStorage storage bs)
+    {
         bytes32 position = BILLING_STORAGE_POSITION;
         assembly {
             bs.slot := position
@@ -70,9 +74,18 @@ contract BillingFacet is IBilling, AccessControl, ReentrancyGuard, Pausable {
         string[] calldata itemCodes,
         uint256 dueDate,
         string calldata description
-    ) external onlyProvider nonReentrant whenNotPaused returns (bytes32 invoiceId) {
+    )
+        external
+        onlyProvider
+        nonReentrant
+        whenNotPaused
+        returns (bytes32 invoiceId)
+    {
         BillingStorage storage bs = getBillingStorage();
-        require(bs.currencySupported[currency], "Billing: currency not supported");
+        require(
+            bs.currencySupported[currency],
+            "Billing: currency not supported"
+        );
 
         invoiceId = IdGenerator.generateInvoiceId(patient, msg.sender, amount);
 
@@ -94,17 +107,30 @@ contract BillingFacet is IBilling, AccessControl, ReentrancyGuard, Pausable {
         bs.patientInvoices[patient].push(invoiceId);
         bs.providerInvoices[msg.sender].push(invoiceId);
 
-        emit InvoiceCreated(invoiceId, patient, msg.sender, amount, currency, itemCodes, dueDate);
+        emit InvoiceCreated(
+            invoiceId,
+            patient,
+            msg.sender,
+            amount,
+            currency,
+            itemCodes,
+            dueDate
+        );
     }
 
     /// @inheritdoc IBilling
-    function approveInvoice(bytes32 invoiceId) external nonReentrant whenNotPaused {
+    function approveInvoice(
+        bytes32 invoiceId
+    ) external nonReentrant whenNotPaused {
         BillingStorage storage bs = getBillingStorage();
         Invoice storage invoice = bs.invoices[invoiceId];
 
         require(invoice.patient == msg.sender, "Billing: not invoice patient");
-        require(keccak256(abi.encodePacked(invoice.status)) == keccak256(abi.encodePacked("pending")),
-                "Billing: invoice not pending");
+        require(
+            keccak256(abi.encodePacked(invoice.status)) ==
+                keccak256(abi.encodePacked("pending")),
+            "Billing: invoice not pending"
+        );
 
         invoice.status = "approved";
         invoice.approvedAt = block.timestamp;
@@ -113,13 +139,19 @@ contract BillingFacet is IBilling, AccessControl, ReentrancyGuard, Pausable {
     }
 
     /// @inheritdoc IBilling
-    function rejectInvoice(bytes32 invoiceId, string calldata reason) external nonReentrant {
+    function rejectInvoice(
+        bytes32 invoiceId,
+        string calldata reason
+    ) external nonReentrant {
         BillingStorage storage bs = getBillingStorage();
         Invoice storage invoice = bs.invoices[invoiceId];
 
         require(invoice.patient == msg.sender, "Billing: not invoice patient");
-        require(keccak256(abi.encodePacked(invoice.status)) == keccak256(abi.encodePacked("pending")),
-                "Billing: invoice not pending");
+        require(
+            keccak256(abi.encodePacked(invoice.status)) ==
+                keccak256(abi.encodePacked("pending")),
+            "Billing: invoice not pending"
+        );
 
         invoice.status = "rejected";
 
@@ -127,12 +159,17 @@ contract BillingFacet is IBilling, AccessControl, ReentrancyGuard, Pausable {
     }
 
     /// @inheritdoc IBilling
-    function processPayment(bytes32 invoiceId) external onlyAdmin nonReentrant whenNotPaused {
+    function processPayment(
+        bytes32 invoiceId
+    ) external onlyAdmin nonReentrant whenNotPaused {
         BillingStorage storage bs = getBillingStorage();
         Invoice storage invoice = bs.invoices[invoiceId];
 
-        require(keccak256(abi.encodePacked(invoice.status)) == keccak256(abi.encodePacked("approved")),
-                "Billing: invoice not approved");
+        require(
+            keccak256(abi.encodePacked(invoice.status)) ==
+                keccak256(abi.encodePacked("approved")),
+            "Billing: invoice not approved"
+        );
 
         // Here you would integrate with payment processing
         // This could involve HTS token transfers or HBAR payments
@@ -146,17 +183,32 @@ contract BillingFacet is IBilling, AccessControl, ReentrancyGuard, Pausable {
 
         invoice.status = "paid";
 
-        emit PaymentProcessed(invoiceId, invoice.patient, invoice.amount, invoice.currency, block.timestamp);
+        emit PaymentProcessed(
+            invoiceId,
+            invoice.patient,
+            invoice.amount,
+            invoice.currency,
+            block.timestamp
+        );
     }
 
     /// @inheritdoc IBilling
-    function disputeInvoice(bytes32 invoiceId, string calldata reason) external nonReentrant {
+    function disputeInvoice(
+        bytes32 invoiceId,
+        string calldata reason
+    ) external nonReentrant {
         BillingStorage storage bs = getBillingStorage();
         Invoice storage invoice = bs.invoices[invoiceId];
 
-        require(invoice.patient == msg.sender || invoice.provider == msg.sender, "Billing: not authorized");
-        require(keccak256(abi.encodePacked(invoice.status)) != keccak256(abi.encodePacked("disputed")),
-                "Billing: already disputed");
+        require(
+            invoice.patient == msg.sender || invoice.provider == msg.sender,
+            "Billing: not authorized"
+        );
+        require(
+            keccak256(abi.encodePacked(invoice.status)) !=
+                keccak256(abi.encodePacked("disputed")),
+            "Billing: already disputed"
+        );
 
         invoice.status = "disputed";
 
@@ -164,18 +216,24 @@ contract BillingFacet is IBilling, AccessControl, ReentrancyGuard, Pausable {
     }
 
     /// @inheritdoc IBilling
-    function getInvoice(bytes32 invoiceId) external view returns (
-        address patient,
-        address provider,
-        uint256 amount,
-        string memory currency,
-        string[] memory itemCodes,
-        uint256 dueDate,
-        string memory description,
-        string memory status,
-        uint256 createdAt,
-        uint256 approvedAt
-    ) {
+    function getInvoice(
+        bytes32 invoiceId
+    )
+        external
+        view
+        returns (
+            address patient,
+            address provider,
+            uint256 amount,
+            string memory currency,
+            string[] memory itemCodes,
+            uint256 dueDate,
+            string memory description,
+            string memory status,
+            uint256 createdAt,
+            uint256 approvedAt
+        )
+    {
         BillingStorage storage bs = getBillingStorage();
         Invoice memory invoice = bs.invoices[invoiceId];
 
@@ -194,32 +252,49 @@ contract BillingFacet is IBilling, AccessControl, ReentrancyGuard, Pausable {
     }
 
     /// @inheritdoc IBilling
-    function getPatientInvoices(address patient) external view returns (bytes32[] memory invoiceIds) {
+    function getPatientInvoices(
+        address patient
+    ) external view returns (bytes32[] memory invoiceIds) {
         BillingStorage storage bs = getBillingStorage();
         return bs.patientInvoices[patient];
     }
 
     /// @inheritdoc IBilling
-    function getProviderInvoices(address provider) external view returns (bytes32[] memory invoiceIds) {
+    function getProviderInvoices(
+        address provider
+    ) external view returns (bytes32[] memory invoiceIds) {
         BillingStorage storage bs = getBillingStorage();
         return bs.providerInvoices[provider];
     }
 
     /// @inheritdoc IBilling
-    function getPayment(bytes32 invoiceId) external view returns (
-        uint256 amount,
-        string memory currency,
-        uint256 paidAt,
-        bytes32 transactionHash
-    ) {
+    function getPayment(
+        bytes32 invoiceId
+    )
+        external
+        view
+        returns (
+            uint256 amount,
+            string memory currency,
+            uint256 paidAt,
+            bytes32 transactionHash
+        )
+    {
         BillingStorage storage bs = getBillingStorage();
         Payment memory payment = bs.payments[invoiceId];
 
-        return (payment.amount, payment.currency, payment.paidAt, payment.transactionHash);
+        return (
+            payment.amount,
+            payment.currency,
+            payment.paidAt,
+            payment.transactionHash
+        );
     }
 
     /// @inheritdoc IBilling
-    function addSupportedCurrency(string calldata currency) external onlyAdmin nonReentrant {
+    function addSupportedCurrency(
+        string calldata currency
+    ) external onlyAdmin nonReentrant {
         BillingStorage storage bs = getBillingStorage();
 
         if (!bs.currencySupported[currency]) {
@@ -237,7 +312,9 @@ contract BillingFacet is IBilling, AccessControl, ReentrancyGuard, Pausable {
     }
 
     /// @inheritdoc IBilling
-    function isCurrencySupported(string calldata currency) external view returns (bool) {
+    function isCurrencySupported(
+        string calldata currency
+    ) external view returns (bool) {
         BillingStorage storage bs = getBillingStorage();
         return bs.currencySupported[currency];
     }
