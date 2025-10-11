@@ -154,14 +154,16 @@ export default function LandingPage() {
   const navigate = useNavigate();
   const { showToast } = useToast()
   const [isConnecting, setIsConnecting] = useState(false);
-  const { dAppConnector, refresh } = useDAppConnector() ?? {};
+  const { dAppConnector, refresh, connect } = useDAppConnector() ?? {};
   const [showDetails, setShowDetails] = useState(false);
   const [role, setRole] = useState<"patient" | "provider">("patient")
+
   const handleConnectWallet = async () => {
     try {
       setIsConnecting(true);
       if (dAppConnector) {
-        console.log("About to connect")
+        console.log("About to connect");
+        connect?.();
         await dAppConnector.openModal();
         showToast({ title: "Wallet Connected", type: `success` });
         navigate(role === "patient" ? '/patient' : '/provider')

@@ -1,9 +1,4 @@
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate,
-} from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect } from "react";
 import LandingPage from "./components/LandingPage";
 import PatientDashboard from "./components/PatientDashboardIntegrated";
@@ -11,6 +6,7 @@ import ProviderDashboard from "./components/ProviderDashboardIntegrated";
 import Navbar from "./components/Navbar";
 import { getWalletService } from "./services/walletService";
 import { useWalletStore } from "./stores";
+import { ClientProviders } from "./providers";
 
 function App() {
   const { setConnected, setDisconnected } = useWalletStore();
@@ -54,29 +50,33 @@ function App() {
     };
   }, [setConnected, setDisconnected]);
 
+  const Patients = () => (
+    <>
+      <Navbar />
+      <PatientDashboard />
+    </>
+  )
+
+  const Provider = () => (
+    <>
+      <Navbar />
+      <ProviderDashboard />
+    </>
+  )
+
   return (
-    <Router>
-      <div className="min-h-screen bg-afrihealth-black">
-        <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/patient" element={
-            <>
-              <Navbar />
-              <PatientDashboard />
-            </>
-          }
-          />
-          <Route path="/provider" element={
-            <>
-              <Navbar />
-              <ProviderDashboard />
-            </>
-          }
-          />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </div>
-    </Router>
+    <ClientProviders>
+      <Router>
+        <div className="min-h-screen bg-afrihealth-black">
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/patient" element={<Patients />} />
+            <Route path="/provider" element={<Provider />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </div>
+      </Router>
+    </ClientProviders>
   );
 }
 
