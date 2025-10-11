@@ -59,23 +59,19 @@ function App() {
       <div className="min-h-screen bg-afrihealth-black">
         <Routes>
           <Route path="/" element={<LandingPage />} />
-          <Route
-            path="/patient"
-            element={
-              <>
-                <Navbar />
-                <PatientDashboard />
-              </>
-            }
+          <Route path="/patient" element={
+            <>
+              <Navbar />
+              <PatientDashboard />
+            </>
+          }
           />
-          <Route
-            path="/provider"
-            element={
-              <>
-                <Navbar />
-                <ProviderDashboard />
-              </>
-            }
+          <Route path="/provider" element={
+            <>
+              <Navbar />
+              <ProviderDashboard />
+            </>
+          }
           />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

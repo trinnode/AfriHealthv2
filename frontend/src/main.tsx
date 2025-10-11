@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import type { ReactNode, ErrorInfo } from 'react'
 import './index.css'
 import App from './App.tsx'
+import { ToastProvider } from './components/ui/Toast.tsx'
 
 // Error boundary component
 class ErrorBoundary extends Component<
@@ -43,7 +44,10 @@ class ErrorBoundary extends Component<
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>
-      <App />
+      <ToastProvider>
+        <App />
+      </ToastProvider>
     </ErrorBoundary>
+
   </StrictMode>,
 )

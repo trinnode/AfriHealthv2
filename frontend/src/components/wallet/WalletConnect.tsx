@@ -5,27 +5,25 @@
 
 import React, { useEffect, useState } from "react";
 import { useWalletStore } from "../../stores";
+import { useNavigate } from "react-router-dom";
+import { disconnect } from "process";
+import { useToast } from "../ui/Toast";
+import { useDAppConnector } from "../../providers";
 
 interface WalletConnectProps {
   className?: string;
 }
 
-export const WalletConnect: React.FC<WalletConnectProps> = ({
-  className = "",
-}) => {
-  const {
-    accountId,
-    isConnected,
-    network,
-    pairingString,
-    connect,
-    disconnect,
-  } = useWalletStore();
+export const WalletConnect: React.FC<WalletConnectProps> = ({className = "",}) => {
+
+  const { accountId, isConnected, network, pairingString } = useWalletStore();
+  const { showToast } = useToast();
   const [showDropdown, setShowDropdown] = useState(false);
   const [showPairingModal, setShowPairingModal] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isConnecting, setIsConnecting] = useState<boolean>(false);
+  const { dAppConnector, refresh } = useDAppConnector() ?? {};
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = () => setShowDropdown(false);
     if (showDropdown) {
@@ -34,9 +32,27 @@ export const WalletConnect: React.FC<WalletConnectProps> = ({
     }
   }, [showDropdown]);
 
+  const navigate = useNavigate()
+
   const handleConnect = async () => {
-    await connect();
-    setShowPairingModal(true);
+    try {
+      console.log("Connecting")
+      showToast({ title: "Please wait", type: `info` });
+      setIsConnecting(!isConnecting);
+      if (dAppConnector) {
+        console.log("ABout to connect")
+        await dAppConnector.openModal();
+        if (refresh) refresh();
+      }
+      showToast({ title: "Wallet Connected", type: `success` });
+    }
+    catch (error) {
+      console.error("error: ", error);
+    }
+    finally {
+      navigate(role === "patient" ? '/patient' : '/provider')
+      setIsConnecting(true);
+    }
   };
 
   const handleDisconnect = async () => {
@@ -92,13 +108,12 @@ export const WalletConnect: React.FC<WalletConnectProps> = ({
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                 <span className="font-mono text-sm">
-                  {formatAccountId(accountId)}
+                  {formatAccountId(accountId as string)}
                 </span>
               </div>
               <svg
-                className={`w-4 h-4 transition-transform ${
-                  showDropdown ? "rotate-180" : ""
-                }`}
+                className={`w-4 h-4 transition-transform ${showDropdown ? "rotate-180" : ""
+                  }`}
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -131,11 +146,10 @@ export const WalletConnect: React.FC<WalletConnectProps> = ({
                       </p>
                     </div>
                     <div
-                      className={`px-2 py-1 rounded text-xs font-semibold ${
-                        network === "mainnet"
-                          ? "bg-green-900 text-green-200"
-                          : "bg-yellow-900 text-yellow-200"
-                      }`}
+                      className={`px-2 py-1 rounded text-xs font-semibold ${network === "mainnet"
+                        ? "bg-green-900 text-green-200"
+                        : "bg-yellow-900 text-yellow-200"
+                        }`}
                     >
                       {network === "mainnet" ? "LIVE" : "TEST"}
                     </div>
