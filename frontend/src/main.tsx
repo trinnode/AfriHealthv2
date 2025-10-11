@@ -48,6 +48,5 @@ createRoot(document.getElementById('root')!).render(
         <App />
       </ToastProvider>
     </ErrorBoundary>
-
   </StrictMode>,
 )
