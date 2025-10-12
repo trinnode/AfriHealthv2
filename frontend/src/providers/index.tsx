@@ -1,5 +1,5 @@
 
-import { type ReactNode, useEffect, useState, createContext, useContext, useCallback } from 'react';
+import { type ReactNode, useEffect, useState, createContext, useContext, useCallback, useMemo } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
     HederaSessionEvent,
@@ -8,6 +8,7 @@ import {
     HederaChainId,
 } from '@hashgraph/hedera-wallet-connect';
 import { LedgerId } from '@hashgraph/sdk';
+import { useToast } from '../components/ui/Toast';
 
 
 interface WalletEvent {
@@ -24,7 +25,7 @@ interface DAppConnectorWithEvents extends DAppConnector {
     };
 }
 
-const projectId = '674996b2b13d42d667d90efc2d106d48';
+const PROJECT_ID = '674996b2b13d42d667d90efc2d106d48';
 const queryClient = new QueryClient();
 
 const metadata = {
@@ -43,24 +44,22 @@ type DAppConnectorContext = {
     connect: () => Promise<void>
 };
 
-const DAppConnectorContext = createContext<DAppConnectorContext | null>(null);
-export const useDAppConnector = () => useContext(DAppConnectorContext);
-
-type ClientProvidersProps = {
+type ProviderProps = {
     children: ReactNode;
 };
 
-export function ClientProviders({ children }: ClientProvidersProps) {
+const DAppConnectorContext = createContext<DAppConnectorContext | null>(null);
+export const useDAppConnector = () => useContext(DAppConnectorContext);
+
+export function ClientProviders({ children }: ProviderProps) {
+    const { showToast } = useToast()
     const [dAppConnector, setDAppConnector] = useState<DAppConnector | null>(null);
     const [isReady, setIsReady] = useState(false);
     const [userAccountId, setUserAccountId] = useState<string | null>(null);
     const [sessionTopic, setSessionTopic] = useState<string | null>(null);
-    const [isMounted, setIsMounted] = useState<boolean>(false);
 
-    // Listen for account/session changes using events$
     useEffect(() => {
         if (!dAppConnector) return;
-
 
         const connectorWithEvents = dAppConnector as DAppConnectorWithEvents;
         const subscription = connectorWithEvents.events$?.subscribe((event: WalletEvent) => {
@@ -80,62 +79,82 @@ export function ClientProviders({ children }: ClientProvidersProps) {
             }
         });
 
-        // Set initial state
         setUserAccountId(dAppConnector.signers?.[0]?.getAccountId().toString() ?? null);
         if (dAppConnector.signers?.[0]?.topic) setSessionTopic(dAppConnector.signers[0].topic);
         return () => subscription && subscription.unsubscribe();
     }, [dAppConnector]);
 
-    // Provide a disconnect function
-    const disconnect = async () => {
+    const disconnect = useCallback(async () => {
         if (dAppConnector && sessionTopic) {
+            showToast({ title: "Trying to connect wallet. please wait", type: `info` });
             await dAppConnector.disconnect(sessionTopic);
             setUserAccountId(null);
             setSessionTopic(null);
         }
-    };
+    }, [dAppConnector, sessionTopic, showToast]);
 
-    const refresh = () => {
+    const refresh = useCallback(() => {
         if (dAppConnector) {
             setUserAccountId(dAppConnector.signers?.[0]?.getAccountId().toString() ?? null);
             setSessionTopic(dAppConnector.signers?.[0]?.topic ?? null);
         }
-    };
+    }, [dAppConnector]);
 
-    const connect= useCallback( async()=> {
-        const connector = new DAppConnector(
-            metadata,
-            LedgerId.TESTNET,
-            projectId,
-            Object.values(HederaJsonRpcMethod),
-            [HederaSessionEvent.ChainChanged, HederaSessionEvent.AccountsChanged],
-            [HederaChainId.Mainnet, HederaChainId.Testnet],
-        );
-        await connector.init();
-        if (isMounted) {
-            setDAppConnector(connector);
-            setIsReady(true);
+    const connect = useCallback(async () => {
+        if (dAppConnector) {
+            await dAppConnector.openModal();
+            refresh();
         }
-    }, [])
+    }, [dAppConnector, refresh]);
 
     useEffect(() => {
-        setIsMounted(true);
-        const init = async () => await connect()
-        init().catch(console.log);
-        return () => {
-            setIsMounted(false);
+        let isMounted = true;
+
+        const init = async () => {
+            try {
+                const connector = new DAppConnector(
+                    metadata,
+                    LedgerId.TESTNET,
+                    PROJECT_ID,
+                    Object.values(HederaJsonRpcMethod),
+                    [HederaSessionEvent.ChainChanged, HederaSessionEvent.AccountsChanged],
+                    [HederaChainId.Mainnet, HederaChainId.Testnet],
+                );
+                await connector.init();
+                if (isMounted) {
+                    setDAppConnector(connector);
+                    setIsReady(true);
+                }
+            } catch (error) {
+                console.error('Failed to initialize connector:', error);
+            }
         };
-    }, [connect]);
+
+        init();
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+
+    const value = useMemo(() => ({
+        dAppConnector,
+        userAccountId,
+        sessionTopic,
+        disconnect,
+        refresh,
+        connect,
+    }), [dAppConnector, userAccountId, sessionTopic, disconnect, refresh, connect]);
 
     if (!isReady)
         return (
             <div style={{ color: 'white', textAlign: 'center', marginTop: '2rem' }}>
-                Loading wallet...
+                Loading ...
             </div>
         );
 
     return (
-        <DAppConnectorContext.Provider value={{ dAppConnector, userAccountId, sessionTopic, disconnect, refresh, connect }}>
+        <DAppConnectorContext.Provider value={value}>
             <QueryClientProvider client={queryClient}>
                 {children}
             </QueryClientProvider>
