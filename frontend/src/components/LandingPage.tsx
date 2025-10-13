@@ -10,11 +10,10 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import * as THREE from "three";
 import { useNavigate } from "react-router-dom";
-import { getWalletService } from "../services/walletService";
+import { useToast } from "./ui/Toast";
+import { useDAppConnector } from "../providers";
 
-/**
- * Animated 3D Sphere representing health data
- */
+
 function HealthSphere({
   position = [0, 0, 0],
 }: {
@@ -54,9 +53,6 @@ function HealthSphere({
   );
 }
 
-/**
- * Orbiting particles representing data points
- */
 function OrbitingParticles() {
   const particlesRef = useRef<THREE.Points>(null);
   const count = 100;
@@ -125,9 +121,6 @@ function OrbitingParticles() {
   );
 }
 
-/**
- * 3D Scene component
- */
 function Scene() {
   return (
     <>
@@ -156,25 +149,39 @@ function Scene() {
   );
 }
 
-/**
- * Main Landing Page with comprehensive platform showcase
- */
+
 export default function LandingPage() {
   const navigate = useNavigate();
-  const [connecting, setConnecting] = useState(false);
+  const { showToast } = useToast()
+  const [isConnecting, setIsConnecting] = useState(false);
+  const { dAppConnector, refresh, connect } = useDAppConnector() ?? {};
   const [showDetails, setShowDetails] = useState(false);
+  const [role, setRole] = useState<"patient" | "provider">("patient")
 
   const handleConnectWallet = async () => {
     try {
-      setConnecting(true);
-      const walletService = getWalletService();
-      await walletService.connect();
-      navigate("/patient");
-    } catch (error) {
-      console.error("Failed to connect wallet:", error);
-    } finally {
-      setConnecting(false);
+      setIsConnecting(true);
+      if (dAppConnector) {
+        console.log("About to connect");
+        connect?.();
+        await dAppConnector.openModal();
+        showToast({ title: "Wallet Connected", type: `success` });
+        navigate(role === "patient" ? '/patient' : '/provider')
+        setIsConnecting(false);
+        if (refresh) refresh();
+      }
+      else {
+        console.log("no app connector")
+        showToast({ title: "Something went wrong connecting wallet", type: `error` });
+        setIsConnecting(false);
+      }
+
     }
+    catch (error) {
+      console.error("error: ", error);
+      setIsConnecting(false);
+    }
+
   };
 
   const features = [
@@ -277,7 +284,7 @@ export default function LandingPage() {
 
   return (
     <div className="relative w-full min-h-screen bg-black text-white overflow-hidden">
-      {/* 3D Background */}
+
       <div className="fixed inset-0 z-0 opacity-30">
         <Canvas>
           <Suspense fallback={null}>
@@ -286,9 +293,7 @@ export default function LandingPage() {
         </Canvas>
       </div>
 
-      {/* Content Overlay */}
       <div className="relative z-10">
-        {/* Hero Section */}
         <section className="min-h-screen flex flex-col items-center justify-center px-6 py-20">
           <motion.div
             initial={{ opacity: 0, y: -50 }}
@@ -309,7 +314,7 @@ export default function LandingPage() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-12">
-              <motion.button
+              {/* <motion.button
                 whileHover={{
                   scale: 1.08,
                   boxShadow: "0 20px 60px rgba(255, 107, 53, 0.4)",
@@ -320,17 +325,19 @@ export default function LandingPage() {
                 className="px-10 py-5 bg-afrihealth-orange text-black font-mono font-bold text-lg rounded-xl hover:bg-opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-2xl border-2 border-afrihealth-orange"
               >
                 {connecting ? "Connecting..." : "🔗 Connect Wallet"}
-              </motion.button>
+              </motion.button> */}
               <motion.button
                 whileHover={{
                   scale: 1.08,
                   boxShadow: "0 20px 60px rgba(74, 95, 58, 0.4)",
                 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => navigate("/patient")}
+                onClick={() => {
+                  setRole("patient")
+                  handleConnectWallet()
+                }}
                 className="px-10 py-5 bg-transparent border-3 border-afrihealth-green text-afrihealth-green font-mono font-bold text-lg rounded-xl hover:bg-afrihealth-green hover:text-black transition-all shadow-2xl"
-              >
-                👤 Patient Portal
+              >Connect as a Patient
               </motion.button>
               <motion.button
                 whileHover={{
@@ -338,15 +345,20 @@ export default function LandingPage() {
                   boxShadow: "0 20px 60px rgba(255, 107, 53, 0.4)",
                 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => navigate("/provider")}
+                disabled={isConnecting}
+                onClick={() => {
+                  setRole("provider")
+                  handleConnectWallet()
+                }}
                 className="px-10 py-5 bg-transparent border-3 border-afrihealth-orange text-afrihealth-orange font-mono font-bold text-lg rounded-xl hover:bg-afrihealth-orange hover:text-black transition-all shadow-2xl"
               >
-                🏥 Provider Portal
+                {isConnecting ? "Connecting.." : "🏥Connect as a Provider"}
               </motion.button>
             </div>
 
             <motion.button
               whileHover={{ scale: 1.05 }}
+              disabled={isConnecting}
               onClick={() => setShowDetails(!showDetails)}
               className="font-mono text-sm text-gray-500 hover:text-afrihealth-orange transition-colors"
             >
@@ -561,10 +573,10 @@ export default function LandingPage() {
                     }}
                     whileTap={{ scale: 0.98 }}
                     onClick={handleConnectWallet}
-                    disabled={connecting}
+                    disabled={isConnecting}
                     className="px-14 py-6 bg-afrihealth-orange text-black font-mono font-bold text-xl rounded-2xl hover:bg-opacity-90 transition-all disabled:opacity-50 shadow-2xl border-3 border-afrihealth-orange"
                   >
-                    {connecting ? "Connecting..." : "🚀 Get Started Now"}
+                    {isConnecting ? "Connecting..." : "🚀 Get Started Now"}
                   </motion.button>
                 </div>
               </section>

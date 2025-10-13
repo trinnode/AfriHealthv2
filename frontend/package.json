@@ -11,6 +11,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@hashgraph/hedera-wallet-connect": "^2.0.3",
     "@hashgraph/sdk": "^2.74.0",
     "@helia/strings": "^4.1.0",
     "@helia/unixfs": "^5.1.0",
