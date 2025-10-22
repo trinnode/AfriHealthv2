@@ -161,27 +161,32 @@ export default function LandingPage() {
   const handleConnectWallet = async () => {
     try {
       setIsConnecting(true);
-      if (dAppConnector) {
-        console.log("About to connect");
-        connect?.();
-        await dAppConnector.openModal();
-        showToast({ title: "Wallet Connected", type: `success` });
-        navigate(role === "patient" ? '/patient' : '/provider')
-        setIsConnecting(false);
-        if (refresh) refresh();
-      }
-      else {
-        console.log("no app connector")
-        showToast({ title: "Something went wrong connecting wallet", type: `error` });
-        setIsConnecting(false);
-      }
 
-    }
-    catch (error) {
-      console.error("error: ", error);
+      if (!dAppConnector) {
+        console.warn('DApp connector not initialized');
+        showToast({ title: 'Something went wrong', type: `error`, message:'Please try refresh this page' });
+        return;
+      }
+      console.log('About to connect');
+      if (connect) {
+        await connect();
+        await dAppConnector.openModal();
+      } else {
+        await dAppConnector.openModal();
+      }
+      showToast({ title: 'Wallet Connected successfully.', type: `success` });
+      navigate(role === 'patient' ? '/patient' : '/provider');
+      if (refresh) refresh();
+    } catch (error) {
+      console.error('error connecting wallet: ', error);
+      showToast({
+        title: 'Something went wrong connecting wallet',
+        type: `error`,
+        message: "Please try again"
+      });
+    } finally {
       setIsConnecting(false);
     }
-
   };
 
   const features = [
@@ -314,18 +319,6 @@ export default function LandingPage() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-12">
-              {/* <motion.button
-                whileHover={{
-                  scale: 1.08,
-                  boxShadow: "0 20px 60px rgba(255, 107, 53, 0.4)",
-                }}
-                whileTap={{ scale: 0.98 }}
-                onClick={handleConnectWallet}
-                disabled={connecting}
-                className="px-10 py-5 bg-afrihealth-orange text-black font-mono font-bold text-lg rounded-xl hover:bg-opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-2xl border-2 border-afrihealth-orange"
-              >
-                {connecting ? "Connecting..." : "🔗 Connect Wallet"}
-              </motion.button> */}
               <motion.button
                 whileHover={{
                   scale: 1.08,

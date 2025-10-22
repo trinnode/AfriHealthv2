@@ -38,20 +38,32 @@ export const WalletConnect: React.FC<WalletConnectProps> = ({className = "",}) =
     try {
       console.log("Connecting")
       showToast({ title: "Please wait", type: `info` });
-      setIsConnecting(!isConnecting);
-      if (dAppConnector) {
-        console.log("ABout to connect")
-        await dAppConnector.openModal();
-        if (refresh) refresh();
-      }
-      showToast({ title: "Wallet Connected", type: `success` });
-    }
-    catch (error) {
-      console.error("error: ", error);
-    }
-    finally {
-      navigate(role === "patient" ? '/patient' : '/provider')
       setIsConnecting(true);
+
+      if (!dAppConnector) {
+        console.warn('DApp connector not ready');
+        showToast({
+          title: 'Wallet connector not available',
+          type: `error`,
+          message: 'please try refreshing'
+        });
+        return;
+      }
+
+      await dAppConnector.openModal();
+      if (refresh) refresh();
+      showToast({ title: 'Wallet Connected successfully', type: `success` });
+    } catch (error) {
+      console.error("error: ", error);
+    } finally {
+      try {
+        if (dAppConnector && dAppConnector.signers?.length) {
+          navigate('/patient');
+        }
+      } catch (err) {
+        console.warn('Navigation failed', err);
+      }
+      setIsConnecting(false);
     }
   };
 
@@ -79,7 +91,8 @@ export const WalletConnect: React.FC<WalletConnectProps> = ({className = "",}) =
         {!isConnected ? (
           <button
             onClick={handleConnect}
-            className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl flex items-center gap-2"
+            disabled={isConnecting}
+            className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <svg
               className="w-5 h-5"
@@ -94,7 +107,7 @@ export const WalletConnect: React.FC<WalletConnectProps> = ({className = "",}) =
                 d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
               />
             </svg>
-            Connect Wallet
+            {isConnecting ? 'Connecting...' : 'Connect Wallet'}
           </button>
         ) : (
           <div className="relative">
