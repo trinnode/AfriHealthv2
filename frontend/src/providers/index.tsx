@@ -1,5 +1,5 @@
 
-import { type ReactNode, useEffect, useState, createContext, useContext, useCallback, useMemo } from 'react';
+import {useEffect, useState, useCallback, useMemo } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
     HederaSessionEvent,
@@ -9,21 +9,11 @@ import {
 } from '@hashgraph/hedera-wallet-connect';
 import { LedgerId } from '@hashgraph/sdk';
 import { useToast } from '../components/ui/Toast';
+import type { ProviderProps } from '../types';
+import { DAppConnectorContext } from './useDappConnector';
 
 
-interface WalletEvent {
-    name: string;
-    data: {
-        topic?: string;
-        [key: string]: unknown;
-    };
-}
 
-interface DAppConnectorWithEvents extends DAppConnector {
-    events$?: {
-        subscribe: (callback: (event: WalletEvent) => void) => { unsubscribe: () => void };
-    };
-}
 
 const PROJECT_ID = '674996b2b13d42d667d90efc2d106d48';
 const queryClient = new QueryClient();
@@ -35,21 +25,7 @@ const metadata = {
     icons: ['https://res.cloudinary.com/depwujqik/image/upload/v1759023580/AFRIHEALTH-_csktai.png'],
 };
 
-type DAppConnectorContext = {
-    dAppConnector: DAppConnector | null;
-    userAccountId: string | null;
-    sessionTopic: string | null;
-    disconnect: (() => Promise<void>) | null;
-    refresh: (() => void) | null;
-    connect: () => Promise<void>
-};
 
-type ProviderProps = {
-    children: ReactNode;
-};
-
-const DAppConnectorContext = createContext<DAppConnectorContext | null>(null);
-export const useDAppConnector = () => useContext(DAppConnectorContext);
 
 export function ClientProviders({ children }: ProviderProps) {
     const { showToast } = useToast()

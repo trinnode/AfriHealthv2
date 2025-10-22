@@ -161,7 +161,6 @@ export default function LandingPage() {
   const handleConnectWallet = async () => {
     try {
       setIsConnecting(true);
-
       if (!dAppConnector) {
         console.warn('DApp connector not initialized');
         showToast({ title: 'Something went wrong', type: `error`, message:'Please try refresh this page' });
@@ -170,7 +169,6 @@ export default function LandingPage() {
       console.log('About to connect');
       if (connect) {
         await connect();
-        await dAppConnector.openModal();
       } else {
         await dAppConnector.openModal();
       }
