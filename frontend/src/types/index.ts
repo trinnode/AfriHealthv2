@@ -1,10 +1,4 @@
-/**
- * AfriHealth Ledger - TypeScript Type Definitions
- */
-
-// ============================================
-// User & Identity Types
-// ============================================
+import type { DAppConnector } from "@hashgraph/hedera-wallet-connect";
 
 export type UserRole = "patient" | "provider" | "insurer" | "admin";
 
@@ -76,10 +70,6 @@ export interface Consent {
   hcsSequenceNumber?: number;
 }
 
-// ============================================
-// Medical Records Types
-// ============================================
-
 export type RecordType =
   | "consultation"
   | "lab_result"
@@ -150,10 +140,6 @@ export interface VitalSigns {
   recordedAt: string;
 }
 
-// ============================================
-// Appointment Types
-// ============================================
-
 export type AppointmentStatus =
   | "scheduled"
   | "confirmed"
@@ -189,9 +175,6 @@ export interface Appointment {
   updatedAt: string;
 }
 
-// ============================================
-// Billing Types
-// ============================================
 
 export type BillStatus =
   | "draft"
@@ -248,9 +231,6 @@ export interface Bill {
   updatedAt: string;
 }
 
-// ============================================
-// Insurance Types
-// ============================================
 
 export type ClaimStatus =
   | "draft"
@@ -328,9 +308,6 @@ export interface InsuranceClaim {
   hcsSequenceNumber?: number;
 }
 
-// ============================================
-// Wallet & Transaction Types
-// ============================================
 
 export interface WalletState {
   isConnected: boolean;
@@ -364,9 +341,6 @@ export interface Transaction {
   metadata?: Record<string, unknown>;
 }
 
-// ============================================
-// Notification Types
-// ============================================
 
 export type NotificationType =
   | "consent_request"
@@ -390,9 +364,6 @@ export interface Notification {
   createdAt: string;
 }
 
-// ============================================
-// Activity Log Types
-// ============================================
 
 export type ActivityType =
   | "consent_granted"
@@ -414,10 +385,6 @@ export interface Activity {
   timestamp: string;
   metadata?: Record<string, unknown>;
 }
-
-// ============================================
-// Statistics Types
-// ============================================
 
 export interface PatientStats {
   activeConsents: number;
@@ -460,9 +427,6 @@ export interface PatientListItem {
   medicalHistory?: string;
 }
 
-// ============================================
-// API Response Types
-// ============================================
 
 export interface ApiResponse<T> {
   success: boolean;
@@ -482,9 +446,6 @@ export interface PaginatedResponse<T> {
   };
 }
 
-// ============================================
-// Form Types
-// ============================================
 
 export interface ConsentFormData {
   providerId: string;
@@ -517,3 +478,29 @@ export interface AppointmentFormData {
   reason: string;
   notes?: string;
 }
+export interface WalletEvent {
+    name: string;
+    data: {
+        topic?: string;
+        [key: string]: unknown;
+    };
+}
+
+export interface DAppConnectorWithEvents extends DAppConnector {
+    events$?: {
+        subscribe: (callback: (event: WalletEvent) => void) => { unsubscribe: () => void };
+    };
+}
+export interface DAppConnectorContextProps {
+    dAppConnector: DAppConnector | null;
+    userAccountId: string | null;
+    sessionTopic: string | null;
+    disconnect: (() => Promise<void>) | null;
+    refresh: (() => void) | null;
+    connect: () => Promise<void>
+};
+
+export interface ProviderProps {
+    children: React.ReactNode;
+};
+

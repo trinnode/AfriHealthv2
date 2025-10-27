@@ -1,38 +1,35 @@
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "./UI";
-import { useWalletStore } from "../stores";
-import { getWalletService } from "../services/walletService";
+// import { useWalletStore } from "../stores";
+// import { getWalletService } from "../services/walletService";
 import { useState } from "react";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useToast } from "./ui/Toast";
+import { useAccount, useDisconnect } from "wagmi";
 
 /**
  * Navigation Bar Component
  */
 export default function Navbar() {
   const location = useLocation();
-  const { isConnected, accountId } = useWalletStore();
+  // const { userAccountId, disconnect } = useDAppConnector() ?? {};
   const [connecting, setConnecting] = useState(false);
-
-  const handleConnect = async () => {
-    try {
-      setConnecting(true);
-      const walletService = getWalletService();
-      await walletService.connect();
-    } catch (error) {
-      console.error("Failed to connect wallet:", error);
-    } finally {
-      setConnecting(false);
-    }
+  const { openConnectModal } = useConnectModal();
+  const { showToast } = useToast();
+  const { address } = useAccount()
+  const { disconnect } = useDisconnect()
+  
+  const handleConnect = () => {
+    setConnecting(true);
+    openConnectModal?.();
+    showToast({ title: 'Wallet Connected successfully.', type: `success` });
+    setConnecting(false);
   };
 
   const handleDisconnect = async () => {
-    try {
-      const walletService = getWalletService();
-      await walletService.disconnect();
-    } catch (error) {
-      console.error("Failed to disconnect wallet:", error);
-    }
-  };
+    disconnect()
+  }
 
   return (
     <nav className="bg-black bg-opacity-80 backdrop-blur-md border-b border-gray-800 sticky top-0 z-50">
@@ -57,13 +54,13 @@ export default function Navbar() {
 
           {/* Wallet Connection */}
           <div className="flex items-center space-x-4">
-            {isConnected ? (
+            {address ? (
               <>
                 <div className="hidden sm:block">
                   <div className="px-4 py-2 bg-afrihealth-green bg-opacity-20 border border-afrihealth-green rounded-lg">
                     <p className="font-mono text-xs text-gray-400">Connected</p>
                     <p className="font-mono text-sm text-afrihealth-green font-bold">
-                      {accountId?.slice(0, 10)}...
+                      {address?.slice(0, 3)}...
                     </p>
                   </div>
                 </div>
@@ -103,11 +100,10 @@ function NavLink({
   return (
     <Link to={to}>
       <motion.div
-        className={`font-mono font-bold px-3 py-2 rounded-lg transition-colors ${
-          active
+        className={`font-mono font-bold px-3 py-2 rounded-lg transition-colors ${active
             ? "text-afrihealth-orange bg-afrihealth-orange bg-opacity-10"
             : "text-gray-400 hover:text-white hover:bg-gray-800"
-        }`}
+          }`}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
       >

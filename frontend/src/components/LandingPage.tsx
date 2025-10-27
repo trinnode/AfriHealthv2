@@ -11,8 +11,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import * as THREE from "three";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "./ui/Toast";
-import { useDAppConnector } from "../providers";
-
+import { useConnectModal } from "@rainbow-me/rainbowkit";
 
 function HealthSphere({
   position = [0, 0, 0],
@@ -154,34 +153,18 @@ export default function LandingPage() {
   const navigate = useNavigate();
   const { showToast } = useToast()
   const [isConnecting, setIsConnecting] = useState(false);
-  const { dAppConnector, refresh, connect } = useDAppConnector() ?? {};
+  const { openConnectModal } = useConnectModal();
+
+  // const { dAppConnector, refresh } = useDAppConnector() ?? {};
   const [showDetails, setShowDetails] = useState(false);
   const [role, setRole] = useState<"patient" | "provider">("patient")
 
   const handleConnectWallet = async () => {
-    try {
-      setIsConnecting(true);
-      if (dAppConnector) {
-        console.log("About to connect");
-        connect?.();
-        await dAppConnector.openModal();
-        showToast({ title: "Wallet Connected", type: `success` });
-        navigate(role === "patient" ? '/patient' : '/provider')
-        setIsConnecting(false);
-        if (refresh) refresh();
-      }
-      else {
-        console.log("no app connector")
-        showToast({ title: "Something went wrong connecting wallet", type: `error` });
-        setIsConnecting(false);
-      }
-
-    }
-    catch (error) {
-      console.error("error: ", error);
-      setIsConnecting(false);
-    }
-
+    setIsConnecting(true);
+    openConnectModal?.();
+    showToast({ title: 'Wallet Connected successfully.', type: `success` });
+    setIsConnecting(false);
+    navigate(role === 'patient' ? '/patient' : '/provider');
   };
 
   const features = [
@@ -314,18 +297,6 @@ export default function LandingPage() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-12">
-              {/* <motion.button
-                whileHover={{
-                  scale: 1.08,
-                  boxShadow: "0 20px 60px rgba(255, 107, 53, 0.4)",
-                }}
-                whileTap={{ scale: 0.98 }}
-                onClick={handleConnectWallet}
-                disabled={connecting}
-                className="px-10 py-5 bg-afrihealth-orange text-black font-mono font-bold text-lg rounded-xl hover:bg-opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-2xl border-2 border-afrihealth-orange"
-              >
-                {connecting ? "Connecting..." : "🔗 Connect Wallet"}
-              </motion.button> */}
               <motion.button
                 whileHover={{
                   scale: 1.08,

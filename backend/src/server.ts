@@ -23,7 +23,7 @@ import governanceRoutes from "./routes/governance";
 import auditRoutes from "./routes/audit";
 
 // Import middleware
-import { errorHandler } from "./middleware/errorHandler";
+import { errorHandler } from "./middleware/errorHandler";   
 import { notFoundHandler } from "./middleware/notFoundHandler";
 
 // Import services

@@ -87,3 +87,20 @@ html {
 .card-glow:hover {
   box-shadow: 0 20px 60px rgba(255, 107, 53, 0.3);
 }
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  color: #dce1ff;
+  gap: 1.5rem;
+}
+.spinner {
+  width: 42px;
+  height: 42px;
+  border: 4px solid rgba(255, 255, 255, 0.2);
+  border-left-color: #fdfdff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}

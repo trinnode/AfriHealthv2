@@ -19,19 +19,27 @@ export const WalletConnect = () => {
             console.log("Connecting")
             toast({ title: "Please wait", description: `Trying to connect as a ${role}` });
             setIsConnecting(true);
-            if (dAppConnector) {
-                console.log("ABout to connect")
-                await dAppConnector.openModal();
-                if (refresh) refresh();
+            if (!dAppConnector) {
+                console.warn('DApp connector not ready');
+                toast({ title: 'Wallet connector not available', description: 'Please try refreshing' });
+                return;
             }
-            toast({ title: "Wallet Connected", description: `Connected as ${role}` });
+            await dAppConnector.openModal();
+            if (refresh) refresh();
+            toast({ title: 'Wallet Connected', description: `` });
         }
         catch (error) {
             console.error("error: ", error);
         }
         finally {
-            navigate(role === "patient" ? '/dashboard' : '/providers/dashboard')
-            setIsConnecting(true);
+            try {
+                if (dAppConnector && dAppConnector.signers?.length) {
+                    navigate(role === 'patient' ? '/dashboard' : '/providers/dashboard');
+                }
+            } catch {
+                toast({ title: 'Wallet Connection failed', description: `` });
+            }
+            setIsConnecting(false);
         }
     };
 
