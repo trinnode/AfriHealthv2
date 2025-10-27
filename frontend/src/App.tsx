@@ -71,7 +71,6 @@ function App() {
       <AppProvider>
         <Router>
           <div className="min-h-screen bg-afrihealth-black">
-            <ConnectButton />
             <Routes>
               <Route path="/" element={<LandingPage />} />
               <Route path="/patient" element={<Patients />} />
