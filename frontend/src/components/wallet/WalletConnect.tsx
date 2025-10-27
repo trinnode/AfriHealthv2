@@ -1,14 +1,8 @@
-/**
- * Wallet Connection Component
- * Provides HashConnect wallet integration with account display
- */
-
 import React, { useEffect, useState } from "react";
-import { useWalletStore } from "../../stores";
+// import { useWalletStore } from "../../stores";
 import { useNavigate } from "react-router-dom";
-import { disconnect } from "process";
 import { useToast } from "../ui/Toast";
-import { useDAppConnector } from "../../providers";
+import { useDAppConnector } from "../../providers/clientProvider";
 
 interface WalletConnectProps {
   className?: string;
@@ -16,13 +10,11 @@ interface WalletConnectProps {
 
 export const WalletConnect: React.FC<WalletConnectProps> = ({className = "",}) => {
 
-  const { accountId, isConnected, network, pairingString } = useWalletStore();
   const { showToast } = useToast();
   const [showDropdown, setShowDropdown] = useState(false);
   const [showPairingModal, setShowPairingModal] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [isConnecting, setIsConnecting] = useState<boolean>(false);
-  const { dAppConnector, refresh } = useDAppConnector() ?? {};
+  const {disconnect, userAccountId,dAppConnector, refresh } = useDAppConnector() ?? {};
 
   useEffect(() => {
     const handleClickOutside = () => setShowDropdown(false);
@@ -68,17 +60,17 @@ export const WalletConnect: React.FC<WalletConnectProps> = ({className = "",}) =
   };
 
   const handleDisconnect = async () => {
-    await disconnect();
+    await disconnect?.();
     setShowDropdown(false);
   };
 
-  const copyPairingString = () => {
-    if (pairingString) {
-      navigator.clipboard.writeText(pairingString);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
+  // const copyPairingString = () => {
+  //   if (pairingString) {
+  //     navigator.clipboard.writeText(pairingString);
+  //     setCopied(true);
+  //     setTimeout(() => setCopied(false), 2000);
+  //   }
+  // };
 
   const formatAccountId = (id: string) => {
     if (id.length <= 12) return id;
@@ -88,7 +80,7 @@ export const WalletConnect: React.FC<WalletConnectProps> = ({className = "",}) =
   return (
     <>
       <div className={`relative ${className}`}>
-        {!isConnected ? (
+        {!userAccountId ? (
           <button
             onClick={handleConnect}
             disabled={isConnecting}
@@ -121,7 +113,7 @@ export const WalletConnect: React.FC<WalletConnectProps> = ({className = "",}) =
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                 <span className="font-mono text-sm">
-                  {formatAccountId(accountId as string)}
+                  {formatAccountId(userAccountId as string)}
                 </span>
               </div>
               <svg
@@ -147,10 +139,10 @@ export const WalletConnect: React.FC<WalletConnectProps> = ({className = "",}) =
                     Connected Account
                   </p>
                   <p className="font-mono text-sm text-white break-all">
-                    {accountId}
+                    {userAccountId}
                   </p>
                 </div>
-                <div className="p-4 border-b border-gray-700">
+                {/* <div className="p-4 border-b border-gray-700">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-xs text-gray-400 mb-1">Network</p>
@@ -167,7 +159,7 @@ export const WalletConnect: React.FC<WalletConnectProps> = ({className = "",}) =
                       {network === "mainnet" ? "LIVE" : "TEST"}
                     </div>
                   </div>
-                </div>
+                </div> */}
                 <div className="p-2">
                   <button
                     onClick={handleDisconnect}
@@ -196,7 +188,7 @@ export const WalletConnect: React.FC<WalletConnectProps> = ({className = "",}) =
       </div>
 
       {/* Pairing Modal */}
-      {showPairingModal && pairingString && (
+      {showPairingModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
             <div className="px-6 py-4 border-b border-gray-200">
@@ -226,14 +218,13 @@ export const WalletConnect: React.FC<WalletConnectProps> = ({className = "",}) =
             </div>
 
             <div className="px-6 py-4 space-y-4">
-              <div className="text-sm text-gray-600">
+              {/* <div className="text-sm text-gray-600">
                 <p className="mb-2">
                   Scan the QR code with HashPack or copy the pairing string:
                 </p>
-              </div>
+              </div> */}
 
-              {/* Pairing String */}
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+               {/* <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                 <p className="font-mono text-xs text-gray-900 break-all mb-3">
                   {pairingString}
                 </p>
@@ -275,12 +266,12 @@ export const WalletConnect: React.FC<WalletConnectProps> = ({className = "",}) =
                     </>
                   )}
                 </button>
-              </div>
+              </div>  */}
 
-              <div className="text-xs text-gray-500">
+              {/* <div className="text-xs text-gray-500">
                 <p>Waiting for wallet connection...</p>
-              </div>
-            </div>
+              </div> */}
+            </div> */
 
             <div className="px-6 py-4 bg-gray-50 flex justify-end">
               <button

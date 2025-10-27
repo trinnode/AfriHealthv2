@@ -12,12 +12,17 @@
   },
   "dependencies": {
     "@hashgraph/hedera-wallet-connect": "^2.0.3",
-    "@hashgraph/sdk": "^2.74.0",
+    "@hashgraph/sdk": "^2.75.0",
     "@helia/strings": "^4.1.0",
     "@helia/unixfs": "^5.1.0",
+    "@rainbow-me/rainbowkit": "^2.2.9",
     "@react-three/drei": "^10.7.6",
     "@react-three/fiber": "^9.3.0",
-    "@tanstack/react-query": "^5.90.2",
+    "@tanstack/react-query": "^5.90.5",
+    "@walletconnect/modal": "^2.7.0",
+    "@walletconnect/sign-client": "^2.22.4",
+    "@walletconnect/types": "^2.22.4",
+    "@walletconnect/utils": "^2.22.4",
     "axios": "^1.12.2",
     "date-fns": "^4.1.0",
     "framer-motion": "^12.23.22",
@@ -31,6 +36,8 @@
     "react-router-dom": "^7.9.3",
     "react-toastify": "^11.0.5",
     "three": "^0.180.0",
+    "viem": "2.x",
+    "wagmi": "^2.18.2",
     "zustand": "^5.0.8"
   },
   "devDependencies": {

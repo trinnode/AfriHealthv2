@@ -11,8 +11,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import * as THREE from "three";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "./ui/Toast";
-import { useDAppConnector } from "../providers";
-
+import { useConnectModal } from "@rainbow-me/rainbowkit";
 
 function HealthSphere({
   position = [0, 0, 0],
@@ -154,37 +153,18 @@ export default function LandingPage() {
   const navigate = useNavigate();
   const { showToast } = useToast()
   const [isConnecting, setIsConnecting] = useState(false);
-  const { dAppConnector, refresh, connect } = useDAppConnector() ?? {};
+  const { openConnectModal } = useConnectModal();
+
+  // const { dAppConnector, refresh } = useDAppConnector() ?? {};
   const [showDetails, setShowDetails] = useState(false);
   const [role, setRole] = useState<"patient" | "provider">("patient")
 
   const handleConnectWallet = async () => {
-    try {
-      setIsConnecting(true);
-      if (!dAppConnector) {
-        console.warn('DApp connector not initialized');
-        showToast({ title: 'Something went wrong', type: `error`, message:'Please try refresh this page' });
-        return;
-      }
-      console.log('About to connect');
-      if (connect) {
-        await connect();
-      } else {
-        await dAppConnector.openModal();
-      }
-      showToast({ title: 'Wallet Connected successfully.', type: `success` });
-      navigate(role === 'patient' ? '/patient' : '/provider');
-      if (refresh) refresh();
-    } catch (error) {
-      console.error('error connecting wallet: ', error);
-      showToast({
-        title: 'Something went wrong connecting wallet',
-        type: `error`,
-        message: "Please try again"
-      });
-    } finally {
-      setIsConnecting(false);
-    }
+    setIsConnecting(true);
+    openConnectModal?.();
+    showToast({ title: 'Wallet Connected successfully.', type: `success` });
+    setIsConnecting(false);
+    navigate(role === 'patient' ? '/patient' : '/provider');
   };
 
   const features = [

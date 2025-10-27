@@ -1,8 +1,8 @@
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "./UI";
-import { useWalletStore } from "../stores";
-import { getWalletService } from "../services/walletService";
+// import { useWalletStore } from "../stores";
+// import { getWalletService } from "../services/walletService";
 import { useState } from "react";
 
 /**
@@ -10,14 +10,12 @@ import { useState } from "react";
  */
 export default function Navbar() {
   const location = useLocation();
-  const { isConnected, accountId } = useWalletStore();
+  // const { userAccountId, disconnect } = useDAppConnector() ?? {};
   const [connecting, setConnecting] = useState(false);
 
   const handleConnect = async () => {
     try {
       setConnecting(true);
-      const walletService = getWalletService();
-      await walletService.connect();
     } catch (error) {
       console.error("Failed to connect wallet:", error);
     } finally {
@@ -27,8 +25,7 @@ export default function Navbar() {
 
   const handleDisconnect = async () => {
     try {
-      const walletService = getWalletService();
-      await walletService.disconnect();
+      await disconnect?.()
     } catch (error) {
       console.error("Failed to disconnect wallet:", error);
     }
@@ -57,13 +54,13 @@ export default function Navbar() {
 
           {/* Wallet Connection */}
           <div className="flex items-center space-x-4">
-            {isConnected ? (
+            { userAccountId? (
               <>
                 <div className="hidden sm:block">
                   <div className="px-4 py-2 bg-afrihealth-green bg-opacity-20 border border-afrihealth-green rounded-lg">
                     <p className="font-mono text-xs text-gray-400">Connected</p>
                     <p className="font-mono text-sm text-afrihealth-green font-bold">
-                      {accountId?.slice(0, 10)}...
+                      {userAccountId?.slice(0, 10)}...
                     </p>
                   </div>
                 </div>
