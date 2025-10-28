@@ -10,12 +10,5 @@
                 "distDir": "frontend/dist"
             }
         }
-    ],
-    "routes": [],
-    "rewrites": [
-        {
-            "source": "/(.*)",
-            "destination": "/index.html"
-        }
     ]
 }
