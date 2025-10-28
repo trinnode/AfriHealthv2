@@ -155,7 +155,6 @@ export default function LandingPage() {
   const [isConnecting, setIsConnecting] = useState(false);
   const { openConnectModal } = useConnectModal();
 
-  // const { dAppConnector, refresh } = useDAppConnector() ?? {};
   const [showDetails, setShowDetails] = useState(false);
   const [role, setRole] = useState<"patient" | "provider">("patient")
 

@@ -59,8 +59,8 @@ function ChainSwitcher({ children }: { children: React.ReactNode }) {
                   decimals: 18,
                 },
                 blockExplorerUrls: ['https://hashscan.io/testnet'],
-              },
-            ],
+              }
+            ]
           });
           
           await window.ethereum?.request({

@@ -6,7 +6,7 @@
   "scripts": {
     "install:all": "npm run install:contracts && npm run install:frontend && npm run install:backend",
     "install:contracts": "cd contracts && forge install",
-    "install:frontend": "cd frontend && npm install",
+    "install:frontend": "cd frontend && pnpm install",
     "install:backend": "cd backend && npm install",
     "build": "npm run build:contracts && npm run build:frontend",
     "build:contracts": "cd contracts && forge build",
