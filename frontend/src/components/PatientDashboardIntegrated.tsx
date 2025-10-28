@@ -4,22 +4,21 @@
  */
 
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Card, Button, Badge, Input } from "./UI";
-import { useWalletStore } from "../stores";
+import { Card, Button, Badge } from "./UI";
+import { useAccount } from "wagmi";
 import {
   usePatientConsents,
   usePatientInvoices,
   usePatientRecords,
   usePatientClaims,
-  useGrantConsent,
   useRevokeConsent,
   usePayInvoice,
-  useCreateRecord,
-  useSubmitClaim,
 } from "../hooks";
 import { formatDate, formatCurrency } from "../services/mockDataService";
 import type { Consent, Bill, MedicalRecord, InsuranceClaim } from "../types";
+import { GrantConsentModal } from "./modals/GrantConsentModal";
 
 type TabName =
   | "overview"
@@ -31,47 +30,65 @@ type TabName =
   | "prescriptions"
   | "profile";
 
+interface PatientStats {
+  activeConsents: number;
+  pendingBills: number;
+  totalSpent: number;
+  insuranceCoverage: number;
+  claimsSubmitted: number;
+  claimsApproved: number;
+}
+
 /**
  * Comprehensive Patient Dashboard - Fully Integrated
  */
 export default function PatientDashboard() {
-  const { accountId } = useWalletStore();
+  const { address, isConnected } = useAccount();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabName>("overview");
+  const [showGrantConsentModal, setShowGrantConsentModal] = useState(false);
+
+  // Redirect to home if wallet disconnects
+  useEffect(() => {
+    if (!isConnected) {
+      navigate("/");
+    }
+  }, [isConnected, navigate]);
 
   // Real API data hooks
   const {
     consents,
     loading: consentsLoading,
     refetch: refetchConsents,
-  } = usePatientConsents(accountId);
+  } = usePatientConsents(address ?? undefined);
   const {
     invoices,
     loading: invoicesLoading,
     refetch: refetchInvoices,
-  } = usePatientInvoices(accountId);
+  } = usePatientInvoices(address ?? undefined);
   const {
     records,
     loading: recordsLoading,
     refetch: refetchRecords,
-  } = usePatientRecords(accountId);
+  } = usePatientRecords(address ?? undefined);
   const {
     claims,
     loading: claimsLoading,
     refetch: refetchClaims,
-  } = usePatientClaims(accountId);
+  } = usePatientClaims(address ?? undefined);
 
   // Calculate stats from real data
-  const stats = {
+  const stats: PatientStats = {
     activeConsents: consents.filter((c) => c.status === "active").length,
     pendingBills: invoices.filter(
-      (b) => b.status === "pending_approval" || b.status === "unpaid"
+      (b) => b.status === "pending_approval" || b.status === "approved"
     ).length,
     totalSpent: invoices
       .filter((b) => b.status === "paid")
       .reduce((sum, b) => sum + b.totalAmount, 0),
     insuranceCoverage: claims
       .filter((c) => c.status === "approved" || c.status === "paid")
-      .reduce((sum, c) => sum + (c.approvedAmount || c.claimAmount), 0),
+      .reduce((sum, c) => sum + (c.approvedAmount || c.claimedAmount), 0),
     claimsSubmitted: claims.length,
     claimsApproved: claims.filter(
       (c) => c.status === "approved" || c.status === "paid"
@@ -92,14 +109,13 @@ export default function PatientDashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black text-white p-4 md:p-8">
       {/* Header */}
-      <div className="mb-10 text-center max-w-7xl mx-auto">
-        <h1 className="font-lora text-5xl md:text-6xl lg:text-7xl font-bold mb-4">
-          Patient <span className="text-afrihealth-orange">Portal</span>
-        </h1>
+      <div className="mb-10 max-w-7xl mx-auto">
         <p className="font-mono text-base md:text-lg text-gray-400">
           Account:{" "}
           <span className="text-afrihealth-green font-bold">
-            {accountId || "Not Connected"}
+            {address
+              ? `${address.slice(0, 6)}...${address.slice(-4)}`
+              : "Not Connected"}
           </span>
         </p>
       </div>
@@ -141,6 +157,7 @@ export default function PatientDashboard() {
                 invoices={invoices}
                 consents={consents}
                 loading={invoicesLoading || consentsLoading}
+                onTabChange={setActiveTab}
               />
             )}
             {activeTab === "records" && (
@@ -156,6 +173,7 @@ export default function PatientDashboard() {
                 consents={consents}
                 loading={consentsLoading}
                 refetch={refetchConsents}
+                onGrantConsent={() => setShowGrantConsentModal(true)}
               />
             )}
             {activeTab === "billing" && (
@@ -178,6 +196,13 @@ export default function PatientDashboard() {
           </motion.div>
         </AnimatePresence>
       </div>
+
+      {/* Modals */}
+      <GrantConsentModal
+        isOpen={showGrantConsentModal}
+        onClose={() => setShowGrantConsentModal(false)}
+        onSuccess={refetchConsents}
+      />
     </div>
   );
 }
@@ -215,13 +240,20 @@ function StatCard({ label, value, icon, color = "orange" }: StatCardProps) {
 // Overview Tab
 // ============================================
 interface OverviewTabProps {
-  stats: any;
+  stats: PatientStats;
   invoices: Bill[];
   consents: Consent[];
   loading: boolean;
+  onTabChange: (tab: TabName) => void;
 }
 
-function OverviewTab({ stats, invoices, consents, loading }: OverviewTabProps) {
+function OverviewTab({
+  stats,
+  invoices,
+  consents,
+  loading,
+  onTabChange,
+}: OverviewTabProps) {
   const pendingBill = invoices.find((b) => b.status === "pending_approval");
 
   if (loading) {
@@ -266,16 +298,36 @@ function OverviewTab({ stats, invoices, consents, loading }: OverviewTabProps) {
       <Card variant="default">
         <h2 className="font-lora text-2xl font-bold mb-4">Quick Actions</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Button variant="primary" size="sm" fullWidth>
+          <Button
+            variant="primary"
+            size="sm"
+            fullWidth
+            onClick={() => onTabChange("appointments")}
+          >
             📅 Book Appointment
           </Button>
-          <Button variant="secondary" size="sm" fullWidth>
+          <Button
+            variant="secondary"
+            size="sm"
+            fullWidth
+            onClick={() => onTabChange("records")}
+          >
             📋 View Records
           </Button>
-          <Button variant="success" size="sm" fullWidth>
+          <Button
+            variant="success"
+            size="sm"
+            fullWidth
+            onClick={() => onTabChange("prescriptions")}
+          >
             💊 Refill Prescription
           </Button>
-          <Button variant="danger" size="sm" fullWidth>
+          <Button
+            variant="danger"
+            size="sm"
+            fullWidth
+            onClick={() => onTabChange("consents")}
+          >
             🆘 Emergency Access
           </Button>
         </div>
@@ -377,20 +429,25 @@ function RecordsTab({ records, loading, refetch }: RecordsTabProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <h2 className="font-lora text-3xl font-bold">Medical Records</h2>
-        <select
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          className="px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg font-mono text-sm"
-        >
-          <option value="all">All Records</option>
-          <option value="consultation">Consultations</option>
-          <option value="lab_result">Lab Results</option>
-          <option value="imaging">Imaging</option>
-          <option value="prescription">Prescriptions</option>
-          <option value="vaccination">Vaccinations</option>
-        </select>
+        <div className="flex items-center gap-2">
+          <select
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            className="px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg font-mono text-sm"
+          >
+            <option value="all">All Records</option>
+            <option value="consultation">Consultations</option>
+            <option value="lab_result">Lab Results</option>
+            <option value="imaging">Imaging</option>
+            <option value="prescription">Prescriptions</option>
+            <option value="vaccination">Vaccinations</option>
+          </select>
+          <Button variant="secondary" size="sm" onClick={refetch}>
+            Refresh
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4">
@@ -447,13 +504,22 @@ function AppointmentsTab() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="font-lora text-3xl font-bold">Appointments</h2>
-        <Button variant="primary">📅 Book New Appointment</Button>
+        <Badge variant="warning">� COMING SOON</Badge>
       </div>
 
       <Card variant="default">
-        <p className="text-center text-gray-500 font-mono text-sm py-8">
-          Appointment scheduling coming soon via Hedera Consensus Service.
-        </p>
+        <div className="text-center py-12">
+          <p className="text-gray-400 font-mono text-lg mb-4">
+            📅 Appointment Scheduling
+          </p>
+          <p className="text-gray-500 font-mono text-sm">
+            This feature will be available soon via Hedera Consensus Service.
+          </p>
+          <p className="text-gray-600 font-mono text-xs mt-4">
+            You'll be able to book, reschedule, and manage appointments with
+            healthcare providers.
+          </p>
+        </div>
       </Card>
     </div>
   );
@@ -466,9 +532,15 @@ interface ConsentsTabProps {
   consents: Consent[];
   loading: boolean;
   refetch: () => void;
+  onGrantConsent: () => void;
 }
 
-function ConsentsTab({ consents, loading, refetch }: ConsentsTabProps) {
+function ConsentsTab({
+  consents,
+  loading,
+  refetch,
+  onGrantConsent,
+}: ConsentsTabProps) {
   const revokeConsentApi = useRevokeConsent();
 
   const handleRevoke = async (consentId: string) => {
@@ -495,7 +567,9 @@ function ConsentsTab({ consents, loading, refetch }: ConsentsTabProps) {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="font-lora text-3xl font-bold">Access Consents</h2>
-        <Button variant="primary">+ Grant New Consent</Button>
+        <Button variant="primary" onClick={onGrantConsent}>
+          + Grant New Consent
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 gap-4">
@@ -546,8 +620,13 @@ function ConsentsTab({ consents, loading, refetch }: ConsentsTabProps) {
               <div className="flex flex-col gap-2">
                 {consent.status === "active" && (
                   <>
-                    <Button variant="secondary" size="sm">
-                      Extend
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      disabled
+                      className="opacity-50 cursor-not-allowed"
+                    >
+                      Extend (Coming Soon)
                     </Button>
                     <Button
                       variant="danger"
@@ -559,8 +638,13 @@ function ConsentsTab({ consents, loading, refetch }: ConsentsTabProps) {
                     </Button>
                   </>
                 )}
-                <Button variant="success" size="sm">
-                  View Logs
+                <Button
+                  variant="success"
+                  size="sm"
+                  disabled
+                  className="opacity-50 cursor-not-allowed"
+                >
+                  View Logs (Coming Soon)
                 </Button>
               </div>
             </div>
@@ -594,7 +678,10 @@ function BillingTab({ bills, loading, refetch }: BillingTabProps) {
   const handlePay = async (invoiceId: string, amount: number) => {
     if (!confirm(`Pay ${formatCurrency(amount)}?`)) return;
 
-    const result = await payInvoiceApi.execute(invoiceId, amount);
+    const result = await payInvoiceApi.execute({
+      invoiceId,
+      paymentMethod: 0,
+    });
     if (result) {
       alert("Payment successful!");
       refetch();
@@ -746,7 +833,7 @@ function BillingTab({ bills, loading, refetch }: BillingTabProps) {
 // ============================================
 interface InsuranceTabProps {
   claims: InsuranceClaim[];
-  stats: any;
+  stats: PatientStats;
   loading: boolean;
   refetch: () => void;
 }
@@ -762,9 +849,14 @@ function InsuranceTab({ claims, stats, loading, refetch }: InsuranceTabProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <h2 className="font-lora text-3xl font-bold">Insurance & Claims</h2>
-        <Button variant="primary">+ Submit New Claim</Button>
+        <div className="flex items-center gap-2">
+          <Button variant="secondary" onClick={refetch}>
+            Refresh
+          </Button>
+          <Button variant="primary">+ Submit New Claim</Button>
+        </div>
       </div>
 
       {/* Coverage Summary */}
@@ -827,18 +919,18 @@ function InsuranceTab({ claims, stats, loading, refetch }: InsuranceTabProps) {
                   </span>
                 </div>
                 <h3 className="font-lora text-2xl font-bold mb-2">
-                  {formatCurrency(claim.claimAmount)}
+                  {formatCurrency(claim.claimedAmount)}
                 </h3>
                 <p className="font-mono text-sm text-gray-400 mb-2">
                   Provider: {claim.providerName}
                 </p>
                 <p className="font-mono text-sm text-gray-400 mb-3">
-                  Diagnosis: {claim.diagnosis}
+                  Diagnosis: {claim.diagnosisCodes.join(", ")}
                 </p>
                 <div className="text-xs font-mono text-gray-500">
-                  <p>Submitted: {formatDate(claim.submittedAt)}</p>
-                  {claim.processedAt && (
-                    <p>Processed: {formatDate(claim.processedAt)}</p>
+                  <p>Submitted: {formatDate(claim.submittedDate)}</p>
+                  {claim.reviewedDate && (
+                    <p>Reviewed: {formatDate(claim.reviewedDate)}</p>
                   )}
                   {claim.approvedAmount && (
                     <p className="text-afrihealth-green">
@@ -873,13 +965,22 @@ function PrescriptionsTab() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="font-lora text-3xl font-bold">Prescriptions</h2>
-        <Button variant="primary">Request Refill</Button>
+        <Badge variant="warning">🚧 COMING SOON</Badge>
       </div>
 
       <Card variant="default">
-        <p className="text-center text-gray-500 font-mono text-sm py-8">
-          Prescription management coming soon.
-        </p>
+        <div className="text-center py-12">
+          <p className="text-gray-400 font-mono text-lg mb-4">
+            💊 Prescription Management
+          </p>
+          <p className="text-gray-500 font-mono text-sm">
+            This feature is currently under development.
+          </p>
+          <p className="text-gray-600 font-mono text-xs mt-4">
+            You'll be able to view prescriptions, request refills, and track
+            medication history.
+          </p>
+        </div>
       </Card>
     </div>
   );
@@ -889,7 +990,7 @@ function PrescriptionsTab() {
 // Profile Tab (placeholder)
 // ============================================
 function ProfileTab() {
-  const { accountId } = useWalletStore();
+  const { address } = useAccount();
 
   return (
     <div className="space-y-6">
@@ -901,9 +1002,9 @@ function ProfileTab() {
         </h3>
         <div className="space-y-3">
           <div>
-            <p className="font-mono text-sm text-gray-400">Hedera Account ID</p>
+            <p className="font-mono text-sm text-gray-400">Wallet Address</p>
             <p className="font-mono text-lg font-bold text-afrihealth-green">
-              {accountId || "Not Connected"}
+              {address || "Not Connected"}
             </p>
           </div>
           <div>

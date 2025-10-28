@@ -4,26 +4,35 @@
  */
 
 import {
-  ContractId,
-  ContractFunctionParameters,
-  ContractExecuteTransaction,
-  ContractCallQuery,
-  Hbar,
   AccountId,
   Client,
+  ContractCallQuery,
+  ContractExecuteTransaction,
+  ContractFunctionParameters,
+  ContractFunctionResult,
+  ContractId,
+  Hbar,
+  TransactionReceipt,
 } from "@hashgraph/sdk";
 
 export interface TransactionResult {
   success: boolean;
   transactionId?: string;
-  receipt?: any;
+  receipt?: TransactionReceipt;
   error?: string;
   recordBytes?: Uint8Array;
 }
 
 export interface ContractCallResult {
   success: boolean;
-  data?: any;
+  data?: ContractFunctionResult;
+  error?: string;
+}
+
+export interface ContractInfoResult {
+  success: boolean;
+  contractId: string;
+  exists: boolean;
   error?: string;
 }
 
@@ -82,14 +91,16 @@ export class HederaContractService {
       return {
         success: receipt.status.toString() === "SUCCESS",
         transactionId: txResponse.transactionId.toString(),
-        receipt: receipt,
+        receipt,
         recordBytes: record.contractFunctionResult?.bytes,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Contract execution failed";
       console.error(`Contract execution error (${functionName}):`, error);
       return {
         success: false,
-        error: error.message || "Contract execution failed",
+        error: message,
       };
     }
   }
@@ -115,11 +126,13 @@ export class HederaContractService {
         success: true,
         data: result,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Contract query failed";
       console.error(`Contract query error (${functionName}):`, error);
       return {
         success: false,
-        error: error.message || "Contract query failed",
+        error: message,
       };
     }
   }
@@ -174,7 +187,11 @@ export class HederaContractService {
 
       // Return conservative estimate
       return 150000;
-    } catch (error) {
+    } catch (error: unknown) {
+      console.warn(
+        `Gas estimation failed for ${functionName}, falling back to default`,
+        error
+      );
       // If query fails, return higher default
       return 200000;
     }
@@ -183,9 +200,9 @@ export class HederaContractService {
   /**
    * Get contract info
    */
-  async getContractInfo(contractId: string) {
+  async getContractInfo(contractId: string): Promise<ContractInfoResult> {
     try {
-      const query = await new ContractCallQuery()
+      await new ContractCallQuery()
         .setContractId(ContractId.fromString(contractId))
         .setGas(50000)
         .setFunction(
@@ -193,17 +210,22 @@ export class HederaContractService {
           new ContractFunctionParameters().addBytes32(
             Buffer.from("01ffc9a7", "hex")
           )
-        );
+        )
+        .execute(this.client);
 
       return {
         success: true,
         contractId,
         exists: true,
       };
-    } catch (error) {
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Contract not accessible";
       return {
         success: false,
-        error: "Contract not found or not accessible",
+        contractId,
+        exists: false,
+        error: message,
       };
     }
   }

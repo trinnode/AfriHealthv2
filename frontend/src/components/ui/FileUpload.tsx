@@ -29,32 +29,33 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const validateFiles = useCallback(
+    (files: File[]): { valid: File[]; error: string | null } => {
+      const valid: File[] = [];
+      let errorMsg: string | null = null;
 
-  const validateFiles = (
-    files: File[]
-  ): { valid: File[]; error: string | null } => {
-    const valid: File[] = [];
-    let errorMsg: string | null = null;
-
-    // Check file count
-    if (files.length > maxFiles) {
-      errorMsg = `Maximum ${maxFiles} files allowed`;
-      return { valid: [], error: errorMsg };
-    }
-
-    // Check each file
-    for (const file of files) {
-      if (file.size > maxSize) {
-        errorMsg = `File ${file.name} exceeds ${(maxSize / 1024 / 1024).toFixed(
-          2
-        )}MB limit`;
-        break;
+      if (files.length > maxFiles) {
+        return {
+          valid: [],
+          error: `Maximum ${maxFiles} files allowed`,
+        };
       }
-      valid.push(file);
-    }
 
-    return { valid, error: errorMsg };
-  };
+      for (const file of files) {
+        if (file.size > maxSize) {
+          errorMsg = `${file.name} exceeds maximum size of ${(
+            maxSize /
+            (1024 * 1024)
+          ).toFixed(2)}MB`;
+        } else {
+          valid.push(file);
+        }
+      }
+
+      return { valid, error: errorMsg };
+    },
+    [maxFiles, maxSize]
+  );
 
   const handleFiles = useCallback(
     (files: FileList | null) => {
@@ -73,7 +74,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       onFileSelect(valid);
       setError(null);
     },
-    [maxSize, maxFiles, onFileSelect, validateFiles]
+    [onFileSelect, validateFiles]
   );
 
   const handleDragOver = useCallback(

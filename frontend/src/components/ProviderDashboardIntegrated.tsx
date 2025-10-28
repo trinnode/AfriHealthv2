@@ -3,20 +3,19 @@
  * NO MOCK DATA - All data from backend API
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, Button, Badge, Input } from "./UI";
-import { useWalletStore } from "../stores";
+import { useAccount } from "wagmi";
 import {
   useProviderConsents,
   useProviderInvoices,
   useProviderRecords,
   useProviderClaims,
-  useCreateRecord,
-  useCreateInvoice,
 } from "../hooks";
 import { formatDate, formatCurrency } from "../services/mockDataService";
-import type { Consent, Bill, MedicalRecord, InsuranceClaim } from "../types";
+import type { Consent, Bill, MedicalRecord } from "../types";
 
 type TabName =
   | "overview"
@@ -27,38 +26,50 @@ type TabName =
   | "consents"
   | "profile";
 
+interface ProviderStats {
+  totalPatients: number;
+  activeConsents: number;
+  pendingReviews: number;
+  monthlyRevenue: number;
+  totalRecords: number;
+  claimsProcessed: number;
+}
+
 /**
  * Comprehensive Provider Dashboard - Fully Integrated
  */
 export default function ProviderDashboard() {
-  const { accountId } = useWalletStore();
+  const { address, isConnected } = useAccount();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabName>("overview");
-  const [searchQuery, setSearchQuery] = useState("");
+
+  // Redirect to home if wallet disconnects
+  useEffect(() => {
+    if (!isConnected) {
+      navigate("/");
+    }
+  }, [isConnected, navigate]);
 
   // Real API data hooks
   const {
     consents,
     loading: consentsLoading,
     refetch: refetchConsents,
-  } = useProviderConsents(accountId);
+  } = useProviderConsents(address ?? undefined);
   const {
     invoices,
     loading: invoicesLoading,
     refetch: refetchInvoices,
-  } = useProviderInvoices(accountId);
+  } = useProviderInvoices(address ?? undefined);
   const {
     records,
     loading: recordsLoading,
     refetch: refetchRecords,
-  } = useProviderRecords(accountId);
-  const {
-    claims,
-    loading: claimsLoading,
-    refetch: refetchClaims,
-  } = useProviderClaims(accountId);
+  } = useProviderRecords(address ?? undefined);
+  const { claims } = useProviderClaims(address ?? undefined);
 
   // Calculate stats from real data
-  const stats = {
+  const stats: ProviderStats = {
     totalPatients: new Set(consents.map((c) => c.patientId)).size,
     activeConsents: consents.filter((c) => c.status === "active").length,
     pendingReviews: invoices.filter((b) => b.status === "pending_approval")
@@ -85,14 +96,13 @@ export default function ProviderDashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black text-white p-4 md:p-8">
       {/* Header */}
-      <div className="mb-10 text-center max-w-7xl mx-auto">
-        <h1 className="font-lora text-5xl md:text-6xl lg:text-7xl font-bold mb-4">
-          Provider <span className="text-afrihealth-green">Portal</span>
-        </h1>
+      <div className="mb-10 max-w-7xl mx-auto">
         <p className="font-mono text-base md:text-lg text-gray-400">
           Account:{" "}
           <span className="text-afrihealth-green font-bold">
-            {accountId || "Not Connected"}
+            {address
+              ? `${address.slice(0, 6)}...${address.slice(-4)}`
+              : "Not Connected"}
           </span>
         </p>
       </div>
@@ -134,6 +144,7 @@ export default function ProviderDashboard() {
                 records={records}
                 invoices={invoices}
                 loading={recordsLoading || invoicesLoading}
+                onTabChange={setActiveTab}
               />
             )}
             {activeTab === "patients" && (
@@ -216,13 +227,20 @@ function StatCard({
 // Overview Tab
 // ============================================
 interface OverviewTabProps {
-  stats: any;
+  stats: ProviderStats;
   records: MedicalRecord[];
   invoices: Bill[];
   loading: boolean;
+  onTabChange: (tab: TabName) => void;
 }
 
-function OverviewTab({ stats, records, invoices, loading }: OverviewTabProps) {
+function OverviewTab({
+  stats,
+  records,
+  invoices,
+  loading,
+  onTabChange,
+}: OverviewTabProps) {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -234,7 +252,7 @@ function OverviewTab({ stats, records, invoices, loading }: OverviewTabProps) {
   return (
     <div className="space-y-6">
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
         <StatCard
           title="Total Patients"
           value={stats.totalPatients}
@@ -259,39 +277,57 @@ function OverviewTab({ stats, records, invoices, loading }: OverviewTabProps) {
           icon="💰"
           color="green"
         />
+        <StatCard
+          title="Records Managed"
+          value={stats.totalRecords}
+          icon="📁"
+          color="orange"
+        />
+        <StatCard
+          title="Claims Processed"
+          value={stats.claimsProcessed}
+          icon="✅"
+          color="green"
+        />
       </div>
 
       {/* Quick Actions */}
       <Card variant="default">
-        <h2 className="font-lora text-2xl font-bold mb-4">⚡ Quick Actions</h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="font-lora text-2xl font-bold">⚡ Quick Actions</h2>
+        </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <Button
             variant="primary"
             className="h-24 flex flex-col items-center justify-center gap-2"
+            onClick={() => onTabChange("records")}
           >
             <span className="text-2xl">📋</span>
-            <span className="text-sm">New Record</span>
+            <span className="text-xs">View Records</span>
           </Button>
           <Button
             variant="secondary"
             className="h-24 flex flex-col items-center justify-center gap-2"
+            onClick={() => onTabChange("billing")}
           >
             <span className="text-2xl">💰</span>
-            <span className="text-sm">Create Bill</span>
+            <span className="text-xs">View Bills</span>
           </Button>
           <Button
             variant="success"
             className="h-24 flex flex-col items-center justify-center gap-2"
+            onClick={() => onTabChange("patients")}
           >
             <span className="text-2xl">👥</span>
-            <span className="text-sm">View Patients</span>
+            <span className="text-xs">View Patients</span>
           </Button>
           <Button
             variant="danger"
             className="h-24 flex flex-col items-center justify-center gap-2"
+            onClick={() => onTabChange("appointments")}
           >
             <span className="text-2xl">📅</span>
-            <span className="text-sm">Schedule</span>
+            <span className="text-xs">Appointments</span>
           </Button>
         </div>
       </Card>
@@ -498,7 +534,6 @@ interface RecordsTabProps {
 
 function RecordsTab({ records, loading, refetch }: RecordsTabProps) {
   const [filter, setFilter] = useState<string>("all");
-  const createRecordApi = useCreateRecord();
 
   const filteredRecords =
     filter === "all" ? records : records.filter((r) => r.type === filter);
@@ -513,9 +548,9 @@ function RecordsTab({ records, loading, refetch }: RecordsTabProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <h2 className="font-lora text-3xl font-bold">Medical Records</h2>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
           <select
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
@@ -527,7 +562,12 @@ function RecordsTab({ records, loading, refetch }: RecordsTabProps) {
             <option value="imaging">Imaging</option>
             <option value="prescription">Prescriptions</option>
           </select>
-          <Button variant="primary">+ Create Record</Button>
+          <Button variant="secondary" size="sm" onClick={refetch}>
+            Refresh
+          </Button>
+          <Button variant="primary" size="sm" disabled>
+            + Create Record (Soon)
+          </Button>
         </div>
       </div>
 
@@ -587,8 +627,6 @@ interface BillingTabProps {
 }
 
 function BillingTab({ bills, loading, refetch }: BillingTabProps) {
-  const createInvoiceApi = useCreateInvoice();
-
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -599,9 +637,16 @@ function BillingTab({ bills, loading, refetch }: BillingTabProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <h2 className="font-lora text-3xl font-bold">Billing & Invoices</h2>
-        <Button variant="primary">+ Create Invoice</Button>
+        <div className="flex items-center gap-2">
+          <Button variant="secondary" size="sm" onClick={refetch}>
+            Refresh
+          </Button>
+          <Button variant="primary" size="sm" disabled>
+            + Create Invoice (Soon)
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4">
@@ -706,8 +751,11 @@ function ConsentsTab({ consents, loading, refetch }: ConsentsTabProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <h2 className="font-lora text-3xl font-bold">Patient Consents</h2>
+        <Button variant="secondary" size="sm" onClick={refetch}>
+          Refresh
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 gap-4">
@@ -787,7 +835,7 @@ function ConsentsTab({ consents, loading, refetch }: ConsentsTabProps) {
 // Profile Tab
 // ============================================
 function ProfileTab() {
-  const { accountId } = useWalletStore();
+  const { address } = useAccount();
 
   return (
     <div className="space-y-6">
@@ -799,9 +847,9 @@ function ProfileTab() {
         </h3>
         <div className="space-y-3">
           <div>
-            <p className="font-mono text-sm text-gray-400">Hedera Account ID</p>
+            <p className="font-mono text-sm text-gray-400">Wallet Address</p>
             <p className="font-mono text-lg font-bold text-afrihealth-green">
-              {accountId || "Not Connected"}
+              {address || "Not Connected"}
             </p>
           </div>
           <div>

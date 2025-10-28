@@ -4,10 +4,9 @@
  */
 
 import { ContractFunctionParameters } from "@hashgraph/sdk";
-import {
-  HederaContractService,
-  TransactionResult,
-} from "./HederaContractService";
+import type { ContractFunctionResult } from "@hashgraph/sdk";
+import { HederaContractService } from "./HederaContractService";
+import type { TransactionResult } from "./HederaContractService";
 
 export interface MedicalRecord {
   recordId: string;
@@ -335,7 +334,7 @@ export class RecordsContract {
   /**
    * Parse medical record result from contract
    */
-  private parseRecordResult(data: any): MedicalRecord {
+  private parseRecordResult(data: ContractFunctionResult): MedicalRecord {
     return {
       recordId: "0x" + Buffer.from(data.getBytes32(0)).toString("hex"),
       patient: data.getAddress(1),
@@ -356,7 +355,10 @@ export class RecordsContract {
   /**
    * Helper to parse bytes32 arrays from contract result
    */
-  private parseBytes32ArrayResult(data: any, startIndex: number): string[] {
+  private parseBytes32ArrayResult(
+    data: ContractFunctionResult,
+    startIndex: number
+  ): string[] {
     const count = data.getUint32(startIndex);
     const arr: string[] = [];
     for (let i = 0; i < count; i++) {

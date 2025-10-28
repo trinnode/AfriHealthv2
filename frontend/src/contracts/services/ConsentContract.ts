@@ -4,10 +4,9 @@
  */
 
 import { ContractFunctionParameters } from "@hashgraph/sdk";
-import {
-  HederaContractService,
-  TransactionResult,
-} from "./HederaContractService";
+import type { ContractFunctionResult } from "@hashgraph/sdk";
+import { HederaContractService } from "./HederaContractService";
+import type { TransactionResult } from "./HederaContractService";
 
 export interface Consent {
   consentId: string;
@@ -349,7 +348,7 @@ export class ConsentContract {
   /**
    * Parse consent result from contract
    */
-  private parseConsentResult(data: any): Consent {
+  private parseConsentResult(data: ContractFunctionResult): Consent {
     return {
       consentId: "0x" + Buffer.from(data.getBytes32(0)).toString("hex"),
       patient: data.getAddress(1),
@@ -368,7 +367,10 @@ export class ConsentContract {
   /**
    * Helper to parse string arrays from contract result
    */
-  private parseStringArrayResult(data: any, startIndex: number): string[] {
+  private parseStringArrayResult(
+    data: ContractFunctionResult,
+    startIndex: number
+  ): string[] {
     const count = data.getUint32(startIndex);
     const arr: string[] = [];
     for (let i = 0; i < count; i++) {
@@ -380,7 +382,10 @@ export class ConsentContract {
   /**
    * Helper to parse bytes32 arrays from contract result
    */
-  private parseBytes32ArrayResult(data: any, startIndex: number): string[] {
+  private parseBytes32ArrayResult(
+    data: ContractFunctionResult,
+    startIndex: number
+  ): string[] {
     const count = data.getUint32(startIndex);
     const arr: string[] = [];
     for (let i = 0; i < count; i++) {

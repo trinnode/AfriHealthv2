@@ -3,11 +3,10 @@
  * Handles all interactions with the BillingFacet smart contract
  */
 
-import { ContractFunctionParameters, Hbar } from "@hashgraph/sdk";
-import {
-  HederaContractService,
-  TransactionResult,
-} from "./HederaContractService";
+import { ContractFunctionParameters } from "@hashgraph/sdk";
+import type { ContractFunctionResult } from "@hashgraph/sdk";
+import { HederaContractService } from "./HederaContractService";
+import type { TransactionResult } from "./HederaContractService";
 
 export interface Invoice {
   invoiceId: string;
@@ -338,8 +337,16 @@ export class BillingContract {
   /**
    * Parse invoice result from contract
    */
-  private parseInvoiceResult(data: any): Invoice {
-    const statusMap = ["Pending", "Approved", "Rejected", "Paid", "Disputed"];
+  private parseInvoiceResult(data: ContractFunctionResult): Invoice {
+    const statusMap: Invoice["status"][] = [
+      "Pending",
+      "Approved",
+      "Rejected",
+      "Paid",
+      "Disputed",
+    ];
+    const statusIndex = data.getUint8(5);
+    const status = statusMap[statusIndex] ?? "Pending";
 
     return {
       invoiceId: "0x" + Buffer.from(data.getBytes32(0)).toString("hex"),
@@ -347,7 +354,7 @@ export class BillingContract {
       provider: data.getAddress(2),
       amount: data.getUint256(3).toNumber(),
       currency: data.getString(4),
-      status: statusMap[data.getUint8(5)] as any,
+      status,
       services: this.parseStringArrayResult(data, 6),
       issuedAt: data.getUint256(7).toNumber(),
       dueDate: data.getUint256(8).toNumber(),
@@ -359,8 +366,15 @@ export class BillingContract {
   /**
    * Parse payment result from contract
    */
-  private parsePaymentResult(data: any): Payment {
-    const statusMap = ["Pending", "Completed", "Failed", "Refunded"];
+  private parsePaymentResult(data: ContractFunctionResult): Payment {
+    const statusMap: Payment["status"][] = [
+      "Pending",
+      "Completed",
+      "Failed",
+      "Refunded",
+    ];
+    const statusIndex = data.getUint8(7);
+    const status = statusMap[statusIndex] ?? "Pending";
 
     return {
       paymentId: "0x" + Buffer.from(data.getBytes32(0)).toString("hex"),
@@ -370,14 +384,17 @@ export class BillingContract {
       currency: data.getString(4),
       timestamp: data.getUint256(5).toNumber(),
       transactionHash: data.getString(6),
-      status: statusMap[data.getUint8(7)] as any,
+      status,
     };
   }
 
   /**
    * Helper to parse string arrays
    */
-  private parseStringArrayResult(data: any, startIndex: number): string[] {
+  private parseStringArrayResult(
+    data: ContractFunctionResult,
+    startIndex: number
+  ): string[] {
     const count = data.getUint32(startIndex);
     const arr: string[] = [];
     for (let i = 0; i < count; i++) {
@@ -389,7 +406,10 @@ export class BillingContract {
   /**
    * Helper to parse bytes32 arrays
    */
-  private parseBytes32ArrayResult(data: any, startIndex: number): string[] {
+  private parseBytes32ArrayResult(
+    data: ContractFunctionResult,
+    startIndex: number
+  ): string[] {
     const count = data.getUint32(startIndex);
     const arr: string[] = [];
     for (let i = 0; i < count; i++) {

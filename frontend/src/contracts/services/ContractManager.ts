@@ -87,8 +87,10 @@ export class ContractManager {
       if (!diamondInfo.success) {
         errors.push("Diamond contract not accessible");
       }
-    } catch (error: any) {
-      errors.push(`Contract verification failed: ${error.message}`);
+    } catch (error: unknown) {
+      errors.push(
+        `Contract verification failed: ${resolveErrorMessage(error)}`
+      );
     }
 
     return {
@@ -149,4 +151,18 @@ export function updateContractManagerClient(
  */
 export function clearContractManager() {
   contractManagerInstance = null;
+}
+
+function resolveErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === "string") {
+    return error;
+  }
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return "Unknown error";
+  }
 }

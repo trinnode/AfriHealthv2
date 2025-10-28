@@ -4,12 +4,9 @@
  */
 
 import { ContractFunctionParameters } from "@hashgraph/sdk";
-import {
-  HederaContractService,
-  TransactionResult,
-  ContractCallResult,
-} from "./HederaContractService";
-import { IdentityFacetABI } from "../abis";
+import type { ContractFunctionResult } from "@hashgraph/sdk";
+import { HederaContractService } from "./HederaContractService";
+import type { TransactionResult } from "./HederaContractService";
 
 export interface Identity {
   accountId: string;
@@ -343,7 +340,7 @@ export class IdentityContract {
   /**
    * Parse identity result from contract
    */
-  private parseIdentityResult(data: any): Identity {
+  private parseIdentityResult(data: ContractFunctionResult): Identity {
     return {
       accountId: data.getAddress(0),
       did: data.getString(1),
@@ -360,7 +357,7 @@ export class IdentityContract {
   /**
    * Parse credential result from contract
    */
-  private parseCredentialResult(data: any): Credential {
+  private parseCredentialResult(data: ContractFunctionResult): Credential {
     return {
       credentialHash: "0x" + Buffer.from(data.getBytes32(0)).toString("hex"),
       issuer: data.getAddress(1),
@@ -375,7 +372,10 @@ export class IdentityContract {
   /**
    * Helper to parse string arrays
    */
-  private parseStringArray(data: any, startIndex: number): string[] {
+  private parseStringArray(
+    data: ContractFunctionResult,
+    startIndex: number
+  ): string[] {
     const count = data.getUint32(startIndex);
     const arr: string[] = [];
     for (let i = 0; i < count; i++) {
@@ -387,7 +387,10 @@ export class IdentityContract {
   /**
    * Helper to parse bytes32 arrays
    */
-  private parseBytes32Array(data: any, startIndex: number): string[] {
+  private parseBytes32Array(
+    data: ContractFunctionResult,
+    startIndex: number
+  ): string[] {
     const count = data.getUint32(startIndex);
     const arr: string[] = [];
     for (let i = 0; i < count; i++) {

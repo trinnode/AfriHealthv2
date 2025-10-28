@@ -13,7 +13,7 @@ import {
 } from "../../hooks/useBillingContract";
 import { FileUpload } from "../ui/FileUpload";
 import { TransactionModal } from "../ui/TransactionModal";
-import { useToast } from "../ui/Toast";
+import { useToast } from "../../hooks/useToast";
 
 interface InvoiceManagementProps {
   accountId: string;

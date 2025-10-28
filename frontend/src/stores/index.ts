@@ -1,29 +1,53 @@
 import { create } from "zustand";
-import type { WalletState } from "../services/walletService";
+import type { WalletState } from "../services/enhancedWalletService";
 
 /**
  * Wallet Store
  */
 interface WalletStore extends WalletState {
-  setConnected: (accountId: string, network: string) => void;
+  setConnected: (
+    accountId: string,
+    network: "testnet" | "mainnet",
+    topic?: string | null
+  ) => void;
   setDisconnected: () => void;
-  setPairingString: (pairingString: string) => void;
+  setPairingString: (pairingString: string | null) => void;
 }
 
 export const useWalletStore = create<WalletStore>((set) => ({
   isConnected: false,
+  isConnecting: false,
   accountId: null,
   network: null,
   topic: null,
   pairingString: null,
+  pairingData: null,
 
-  setConnected: (accountId: string, network: string) =>
-    set({ isConnected: true, accountId, network }),
+  setConnected: (
+    accountId: string,
+    network: "testnet" | "mainnet",
+    topic: string | null = null
+  ) =>
+    set({
+      isConnected: true,
+      isConnecting: false,
+      accountId,
+      network,
+      topic,
+    }),
 
   setDisconnected: () =>
-    set({ isConnected: false, accountId: null, network: null }),
+    set({
+      isConnected: false,
+      isConnecting: false,
+      accountId: null,
+      network: null,
+      topic: null,
+      pairingData: null,
+      pairingString: null,
+    }),
 
-  setPairingString: (pairingString: string) => set({ pairingString }),
+  setPairingString: (pairingString: string | null) => set({ pairingString }),
 }));
 
 /**

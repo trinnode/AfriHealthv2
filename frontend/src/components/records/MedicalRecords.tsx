@@ -21,7 +21,7 @@ import {
 import { FileUpload } from "../ui/FileUpload";
 import { TransactionModal } from "../ui/TransactionModal";
 import { ProgressBar } from "../ui/ProgressBar";
-import { useToast } from "../ui/Toast";
+import { useToast } from "../../hooks/useToast";
 
 interface MedicalRecordsProps {
   patientId: string;
@@ -108,12 +108,14 @@ export const MedicalRecords: React.FC<MedicalRecordsProps> = ({
           message: result.error || "Failed to upload record",
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       setTxStatus("error");
+      const message =
+        error instanceof Error ? error.message : "An unexpected error occurred";
       showToast({
         type: "error",
         title: "Upload failed",
-        message: error.message || "An unexpected error occurred",
+        message,
       });
     }
   }, [selectedFiles, formData, registerRecord, showToast, refetch]);

@@ -5,10 +5,20 @@
 
 import axios, { AxiosError } from "axios";
 import type { AxiosInstance } from "axios";
+import type {
+  Consent,
+  MedicalRecord,
+  Bill,
+  InsuranceClaim,
+  InsurancePool,
+  InsuranceMembership,
+} from "../types";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
-export interface ApiResponse<T = any> {
+type UnknownRecord = Record<string, unknown>;
+
+export interface ApiResponse<T = unknown> {
   success: boolean;
   data?: T;
   error?: string;
@@ -122,12 +132,12 @@ class ApiClient {
 
   async getPatientConsents(
     address: string
-  ): Promise<ApiResponse<{ consents: any[] }>> {
+  ): Promise<ApiResponse<{ consents: Consent[] }>> {
     const response = await this.client.get(`/consent/patient/${address}`);
     return response.data;
   }
 
-  async getConsent(id: string): Promise<ApiResponse<{ consent: any }>> {
+  async getConsent(id: string): Promise<ApiResponse<{ consent: Consent }>> {
     const response = await this.client.get(`/consent/${id}`);
     return response.data;
   }
@@ -149,12 +159,12 @@ class ApiClient {
 
   async getPatientRecords(
     address: string
-  ): Promise<ApiResponse<{ records: any[] }>> {
+  ): Promise<ApiResponse<{ records: MedicalRecord[] }>> {
     const response = await this.client.get(`/records/patient/${address}`);
     return response.data;
   }
 
-  async getRecord(id: string): Promise<ApiResponse<{ record: any }>> {
+  async getRecord(id: string): Promise<ApiResponse<{ record: MedicalRecord }>> {
     const response = await this.client.get(`/records/${id}`);
     return response.data;
   }
@@ -206,14 +216,14 @@ class ApiClient {
     return response.data;
   }
 
-  async getInvoice(id: string): Promise<ApiResponse<{ invoice: any }>> {
+  async getInvoice(id: string): Promise<ApiResponse<{ invoice: Bill }>> {
     const response = await this.client.get(`/billing/invoice/${id}`);
     return response.data;
   }
 
   async getPatientInvoices(
     address: string
-  ): Promise<ApiResponse<{ invoices: any[] }>> {
+  ): Promise<ApiResponse<{ invoices: Bill[] }>> {
     const response = await this.client.get(
       `/billing/patient/${address}/invoices`
     );
@@ -222,7 +232,7 @@ class ApiClient {
 
   async getProviderInvoices(
     address: string
-  ): Promise<ApiResponse<{ invoices: any[] }>> {
+  ): Promise<ApiResponse<{ invoices: Bill[] }>> {
     const response = await this.client.get(
       `/billing/provider/${address}/invoices`
     );
@@ -254,14 +264,14 @@ class ApiClient {
     return response.data;
   }
 
-  async getClaim(id: string): Promise<ApiResponse<{ claim: any }>> {
+  async getClaim(id: string): Promise<ApiResponse<{ claim: InsuranceClaim }>> {
     const response = await this.client.get(`/claims/${id}`);
     return response.data;
   }
 
   async getUserClaims(
     address: string
-  ): Promise<ApiResponse<{ claims: any[] }>> {
+  ): Promise<ApiResponse<{ claims: InsuranceClaim[] }>> {
     const response = await this.client.get(`/claims/user/${address}`);
     return response.data;
   }
@@ -291,22 +301,24 @@ class ApiClient {
     return response.data;
   }
 
-  async getAIPolicy(id: string): Promise<ApiResponse<{ policy: any }>> {
+  async getAIPolicy(
+    id: string
+  ): Promise<ApiResponse<{ policy: UnknownRecord }>> {
     const response = await this.client.get(`/ai-policy/${id}`);
     return response.data;
   }
 
   async getPatientAIPolicy(
     address: string
-  ): Promise<ApiResponse<{ policy: any }>> {
+  ): Promise<ApiResponse<{ policy: UnknownRecord }>> {
     const response = await this.client.get(`/ai-policy/patient/${address}`);
     return response.data;
   }
 
   async evaluateWithAI(data: {
     patient: string;
-    invoiceData: any;
-  }): Promise<ApiResponse<{ evaluation: any }>> {
+    invoiceData: UnknownRecord;
+  }): Promise<ApiResponse<{ evaluation: UnknownRecord }>> {
     const response = await this.client.post("/ai-policy/evaluate", data);
     return response.data;
   }
@@ -337,7 +349,9 @@ class ApiClient {
     return response.data;
   }
 
-  async getInsurancePool(id: string): Promise<ApiResponse<{ pool: any }>> {
+  async getInsurancePool(
+    id: string
+  ): Promise<ApiResponse<{ pool: InsurancePool }>> {
     const response = await this.client.get(`/insurance-pool/${id}`);
     return response.data;
   }
@@ -345,7 +359,7 @@ class ApiClient {
   async getPoolMembership(
     poolId: string,
     address: string
-  ): Promise<ApiResponse<{ membership: any }>> {
+  ): Promise<ApiResponse<{ membership: InsuranceMembership | null }>> {
     const response = await this.client.get(
       `/insurance-pool/${poolId}/membership/${address}`
     );
@@ -375,7 +389,9 @@ class ApiClient {
     return response.data;
   }
 
-  async getDispute(id: string): Promise<ApiResponse<{ dispute: any }>> {
+  async getDispute(
+    id: string
+  ): Promise<ApiResponse<{ dispute: UnknownRecord }>> {
     const response = await this.client.get(`/dispute/${id}`);
     return response.data;
   }
@@ -408,7 +424,9 @@ class ApiClient {
     return response.data;
   }
 
-  async getProposal(id: string): Promise<ApiResponse<{ proposal: any }>> {
+  async getProposal(
+    id: string
+  ): Promise<ApiResponse<{ proposal: UnknownRecord }>> {
     const response = await this.client.get(`/governance/proposal/${id}`);
     return response.data;
   }
@@ -421,14 +439,14 @@ class ApiClient {
     address: string,
     startTime: number,
     endTime: number
-  ): Promise<ApiResponse<{ logs: any[] }>> {
+  ): Promise<ApiResponse<{ logs: UnknownRecord[] }>> {
     const response = await this.client.get(`/audit/access-logs/${address}`, {
       params: { startTime, endTime },
     });
     return response.data;
   }
 
-  async getAuditLog(id: string): Promise<ApiResponse<{ log: any }>> {
+  async getAuditLog(id: string): Promise<ApiResponse<{ log: UnknownRecord }>> {
     const response = await this.client.get(`/audit/log/${id}`);
     return response.data;
   }

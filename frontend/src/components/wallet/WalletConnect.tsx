@@ -1,20 +1,20 @@
 import React, { useEffect, useState } from "react";
-// import { useWalletStore } from "../../stores";
-import { useNavigate } from "react-router-dom";
-import { useToast } from "../ui/Toast";
-import { useDAppConnector } from "../../providers/clientProvider";
+import { useToast } from "../../hooks/useToast";
+import { useWallet } from "../../hooks/useWallet";
 
 interface WalletConnectProps {
   className?: string;
 }
 
-export const WalletConnect: React.FC<WalletConnectProps> = ({className = "",}) => {
-
+export const WalletConnect: React.FC<WalletConnectProps> = ({
+  className = "",
+}) => {
   const { showToast } = useToast();
   const [showDropdown, setShowDropdown] = useState(false);
   const [showPairingModal, setShowPairingModal] = useState(false);
-  const [isConnecting, setIsConnecting] = useState<boolean>(false);
-  const {disconnect, userAccountId,dAppConnector, refresh } = useDAppConnector() ?? {};
+  const { walletState, connect, disconnect, isConnecting } = useWallet();
+
+  const userAccountId = walletState.accountId;
 
   useEffect(() => {
     const handleClickOutside = () => setShowDropdown(false);
@@ -24,43 +24,44 @@ export const WalletConnect: React.FC<WalletConnectProps> = ({className = "",}) =
     }
   }, [showDropdown]);
 
-  const navigate = useNavigate()
+  // const navigate = useNavigate(); // Removed for now - not used
 
   const handleConnect = async () => {
     try {
-      console.log("Connecting")
+      console.log("Connecting with HashConnect...");
       showToast({ title: "Please wait", type: `info` });
-      setIsConnecting(true);
 
-      if (!dAppConnector) {
-        console.warn('DApp connector not ready');
-        showToast({
-          title: 'Wallet connector not available',
-          type: `error`,
-          message: 'please try refreshing'
-        });
-        return;
-      }
-
-      await dAppConnector.openModal();
-      if (refresh) refresh();
-      showToast({ title: 'Wallet Connected successfully', type: `success` });
+      await connect();
+      showToast({
+        title: "Wallet Connected successfully",
+        type: `success`,
+        message: "Use HashPack or scan QR code to complete connection",
+      });
     } catch (error) {
-      console.error("error: ", error);
-    } finally {
-      try {
-        if (dAppConnector && dAppConnector.signers?.length) {
-          navigate('/patient');
-        }
-      } catch (err) {
-        console.warn('Navigation failed', err);
-      }
-      setIsConnecting(false);
+      console.error("Connection error: ", error);
+      showToast({
+        title: "Connection failed",
+        type: "error",
+        message: "Please try again",
+      });
     }
   };
 
   const handleDisconnect = async () => {
-    await disconnect?.();
+    try {
+      await disconnect();
+      showToast({
+        title: "Wallet disconnected",
+        type: "success",
+      });
+    } catch (error) {
+      console.error("Disconnect error:", error);
+      showToast({
+        title: "Disconnect failed",
+        type: "error",
+        message: "Please try again",
+      });
+    }
     setShowDropdown(false);
   };
 
@@ -99,7 +100,7 @@ export const WalletConnect: React.FC<WalletConnectProps> = ({className = "",}) =
                 d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
               />
             </svg>
-            {isConnecting ? 'Connecting...' : 'Connect Wallet'}
+            {isConnecting ? "Connecting..." : "Connect Wallet"}
           </button>
         ) : (
           <div className="relative">
@@ -117,8 +118,9 @@ export const WalletConnect: React.FC<WalletConnectProps> = ({className = "",}) =
                 </span>
               </div>
               <svg
-                className={`w-4 h-4 transition-transform ${showDropdown ? "rotate-180" : ""
-                  }`}
+                className={`w-4 h-4 transition-transform ${
+                  showDropdown ? "rotate-180" : ""
+                }`}
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -216,7 +218,6 @@ export const WalletConnect: React.FC<WalletConnectProps> = ({className = "",}) =
                 </button>
               </div>
             </div>
-
             <div className="px-6 py-4 space-y-4">
               {/* <div className="text-sm text-gray-600">
                 <p className="mb-2">
@@ -224,7 +225,7 @@ export const WalletConnect: React.FC<WalletConnectProps> = ({className = "",}) =
                 </p>
               </div> */}
 
-               {/* <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+              {/* <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                 <p className="font-mono text-xs text-gray-900 break-all mb-3">
                   {pairingString}
                 </p>
@@ -271,8 +272,8 @@ export const WalletConnect: React.FC<WalletConnectProps> = ({className = "",}) =
               {/* <div className="text-xs text-gray-500">
                 <p>Waiting for wallet connection...</p>
               </div> */}
-            </div> */
-
+            </div>{" "}
+            */
             <div className="px-6 py-4 bg-gray-50 flex justify-end">
               <button
                 onClick={() => setShowPairingModal(false)}
