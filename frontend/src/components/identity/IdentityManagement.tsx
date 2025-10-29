@@ -13,7 +13,7 @@ import {
   useAddRoleContract,
 } from "../../hooks/useIdentityContract";
 import { TransactionModal } from "../ui/TransactionModal";
-import { useToast } from "../ui/Toast";
+import { useToast } from "../../hooks/useToast";
 
 interface IdentityManagementProps {
   accountId: string;
@@ -34,7 +34,7 @@ export const IdentityManagement: React.FC<IdentityManagementProps> = ({
   } = useIdentityContract(accountId);
   const { isVerified } = useIsVerifiedContract(accountId);
   const { roles } = useIdentityRolesContract(accountId);
-  const { registerIdentity, isLoading: registering } =
+  const { register: registerIdentity, isLoading: registering } =
     useRegisterIdentityContract();
   const { issueCredential, isLoading: issuing } = useIssueCredentialContract();
   const { addRole, isLoading: addingRole } = useAddRoleContract();
@@ -69,12 +69,12 @@ export const IdentityManagement: React.FC<IdentityManagementProps> = ({
     setTxStatus("pending");
 
     try {
-      const result = await registerIdentity(
-        formData.did,
-        formData.idType,
-        formData.publicKey,
-        formData.metadata
-      );
+      const result = await registerIdentity({
+        did: formData.did,
+        publicKey: formData.publicKey,
+        roles: [formData.idType],
+        metadata: formData.metadata,
+      });
 
       if (result.success) {
         setTxStatus("success");
@@ -126,12 +126,12 @@ export const IdentityManagement: React.FC<IdentityManagementProps> = ({
     try {
       const expiresAt = Math.floor(Date.now() / 1000) + 86400 * 365; // 1 year
 
-      const result = await issueCredential(
-        formData.targetAccount,
-        formData.credentialType,
-        formData.credentialData,
-        expiresAt
-      );
+      const result = await issueCredential({
+        subject: formData.targetAccount,
+        credentialType: formData.credentialType,
+        credentialHash: formData.credentialData,
+        expiresAt,
+      });
 
       if (result.success) {
         setTxStatus("success");
@@ -296,18 +296,22 @@ export const IdentityManagement: React.FC<IdentityManagementProps> = ({
               </p>
             </div>
             <div>
-              <p className="text-sm text-gray-600">Identity Type</p>
-              <p className="text-gray-900 capitalize">{identity.idType}</p>
+              <p className="text-sm text-gray-600">Roles</p>
+              <p className="text-gray-900 capitalize">
+                {identity.roles.join(", ")}
+              </p>
             </div>
             <div>
               <p className="text-sm text-gray-600">Account</p>
               <p className="font-mono text-sm text-gray-900">
-                {identity.account}
+                {identity.accountId}
               </p>
             </div>
             <div>
-              <p className="text-sm text-gray-600">Created</p>
-              <p className="text-gray-900">{formatDate(identity.createdAt)}</p>
+              <p className="text-sm text-gray-600">Registered</p>
+              <p className="text-gray-900">
+                {formatDate(identity.registeredAt)}
+              </p>
             </div>
             <div className="md:col-span-2">
               <p className="text-sm text-gray-600">Public Key</p>

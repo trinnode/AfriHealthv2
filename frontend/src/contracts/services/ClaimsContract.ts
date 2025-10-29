@@ -4,10 +4,9 @@
  */
 
 import { ContractFunctionParameters } from "@hashgraph/sdk";
-import {
-  HederaContractService,
-  TransactionResult,
-} from "./HederaContractService";
+import type { ContractFunctionResult } from "@hashgraph/sdk";
+import { HederaContractService } from "./HederaContractService";
+import type { TransactionResult } from "./HederaContractService";
 
 export interface Claim {
   claimId: string;
@@ -312,14 +311,16 @@ export class ClaimsContract {
   /**
    * Parse claim result from contract
    */
-  private parseClaimResult(data: any): Claim {
-    const statusMap = [
+  private parseClaimResult(data: ContractFunctionResult): Claim {
+    const statusMap: Claim["status"][] = [
       "Submitted",
       "UnderReview",
       "Approved",
       "Rejected",
       "Paid",
     ];
+    const statusIndex = data.getUint8(8);
+    const status = statusMap[statusIndex] ?? "Submitted";
 
     return {
       claimId: "0x" + Buffer.from(data.getBytes32(0)).toString("hex"),
@@ -330,7 +331,7 @@ export class ClaimsContract {
       claimType: data.getString(5),
       description: data.getString(6),
       supportingDocs: this.parseStringArrayResult(data, 7),
-      status: statusMap[data.getUint8(8)] as any,
+      status,
       submittedAt: data.getUint256(9).toNumber(),
       reviewedAt: data.getUint256(10).toNumber(),
       paidAt: data.getUint256(11).toNumber(),
@@ -342,7 +343,10 @@ export class ClaimsContract {
   /**
    * Helper to parse string arrays
    */
-  private parseStringArrayResult(data: any, startIndex: number): string[] {
+  private parseStringArrayResult(
+    data: ContractFunctionResult,
+    startIndex: number
+  ): string[] {
     const count = data.getUint32(startIndex);
     const arr: string[] = [];
     for (let i = 0; i < count; i++) {
@@ -354,7 +358,10 @@ export class ClaimsContract {
   /**
    * Helper to parse bytes32 arrays
    */
-  private parseBytes32ArrayResult(data: any, startIndex: number): string[] {
+  private parseBytes32ArrayResult(
+    data: ContractFunctionResult,
+    startIndex: number
+  ): string[] {
     const count = data.getUint32(startIndex);
     const arr: string[] = [];
     for (let i = 0; i < count; i++) {

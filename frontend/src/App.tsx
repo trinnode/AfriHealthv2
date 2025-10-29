@@ -1,24 +1,27 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate} from "react-router-dom";
+import "@rainbow-me/rainbowkit/styles.css";
 import LandingPage from "./components/LandingPage";
 import PatientDashboard from "./components/PatientDashboardIntegrated";
 import ProviderDashboard from "./components/ProviderDashboardIntegrated";
 import Navbar from "./components/Navbar";
 import { AppProvider } from "./providers/walletProvider";
 
+
 function App() {
+
   const Patients = () => (
     <>
       <Navbar />
       <PatientDashboard />
     </>
-  )
+  );
 
   const Provider = () => (
     <>
       <Navbar />
       <ProviderDashboard />
     </>
-  )
+  );
 
   return (
       <AppProvider>
@@ -33,7 +36,7 @@ function App() {
           </div>
         </Router>
       </AppProvider>
-    // </ClientProviders>
+    
   );
 }
 

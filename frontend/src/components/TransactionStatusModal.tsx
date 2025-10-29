@@ -3,19 +3,19 @@
  * Shows progress for blockchain transactions with file uploads
  */
 
-import { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { createPortal } from 'react-dom';
+import { useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { createPortal } from "react-dom";
 
 export type TransactionStep =
-  | 'idle'
-  | 'preparing'
-  | 'uploading'
-  | 'signing'
-  | 'submitting'
-  | 'confirming'
-  | 'success'
-  | 'error';
+  | "idle"
+  | "preparing"
+  | "uploading"
+  | "signing"
+  | "submitting"
+  | "confirming"
+  | "success"
+  | "error";
 
 interface TransactionStatusModalProps {
   isOpen: boolean;
@@ -28,15 +28,30 @@ interface TransactionStatusModalProps {
   canClose?: boolean;
 }
 
-const stepConfig: Record<TransactionStep, { icon: string; label: string; color: string }> = {
-  idle: { icon: '⏸️', label: 'Ready', color: 'text-gray-400' },
-  preparing: { icon: '⚙️', label: 'Preparing', color: 'text-blue-400' },
-  uploading: { icon: '📤', label: 'Uploading Files', color: 'text-orange-400' },
-  signing: { icon: '✍️', label: 'Waiting for Signature', color: 'text-yellow-400' },
-  submitting: { icon: '📡', label: 'Submitting Transaction', color: 'text-purple-400' },
-  confirming: { icon: '⏳', label: 'Confirming on Network', color: 'text-blue-400' },
-  success: { icon: '✅', label: 'Success!', color: 'text-afrihealth-green' },
-  error: { icon: '❌', label: 'Error', color: 'text-afrihealth-red' },
+const stepConfig: Record<
+  TransactionStep,
+  { icon: string; label: string; color: string }
+> = {
+  idle: { icon: "⏸️", label: "Ready", color: "text-gray-400" },
+  preparing: { icon: "⚙️", label: "Preparing", color: "text-blue-400" },
+  uploading: { icon: "📤", label: "Uploading Files", color: "text-orange-400" },
+  signing: {
+    icon: "✍️",
+    label: "Waiting for Signature",
+    color: "text-yellow-400",
+  },
+  submitting: {
+    icon: "📡",
+    label: "Submitting Transaction",
+    color: "text-purple-400",
+  },
+  confirming: {
+    icon: "⏳",
+    label: "Confirming on Network",
+    color: "text-blue-400",
+  },
+  success: { icon: "✅", label: "Success!", color: "text-afrihealth-green" },
+  error: { icon: "❌", label: "Error", color: "text-afrihealth-red" },
 };
 
 export default function TransactionStatusModal({
@@ -52,18 +67,18 @@ export default function TransactionStatusModal({
   // Prevent scroll when modal is open
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     }
     return () => {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     };
   }, [isOpen]);
 
   const currentStep = stepConfig[step];
-  const isProcessing = !['idle', 'success', 'error'].includes(step);
-  const showClose = canClose || step === 'success' || step === 'error';
+  const isProcessing = !["idle", "success", "error"].includes(step);
+  const showClose = canClose || step === "success" || step === "error";
 
   const getHashScanUrl = (txId: string) => {
     return `https://hashscan.io/testnet/transaction/${txId}`;
@@ -113,14 +128,20 @@ export default function TransactionStatusModal({
                 <div className="text-center space-y-4">
                   <motion.div
                     animate={isProcessing ? { rotate: 360 } : {}}
-                    transition={isProcessing ? { duration: 2, repeat: Infinity, ease: 'linear' } : {}}
+                    transition={
+                      isProcessing
+                        ? { duration: 2, repeat: Infinity, ease: "linear" }
+                        : {}
+                    }
                     className="text-6xl"
                   >
                     {currentStep.icon}
                   </motion.div>
 
                   <div>
-                    <h3 className={`font-mono text-xl font-bold ${currentStep.color}`}>
+                    <h3
+                      className={`font-mono text-xl font-bold ${currentStep.color}`}
+                    >
                       {currentStep.label}
                     </h3>
                     {message && (
@@ -153,18 +174,25 @@ export default function TransactionStatusModal({
                 {/* Steps Timeline */}
                 <div className="space-y-3">
                   {[
-                    { key: 'preparing', label: 'Prepare Transaction' },
-                    { key: 'uploading', label: 'Upload Files', optional: true },
-                    { key: 'signing', label: 'Sign Transaction' },
-                    { key: 'submitting', label: 'Submit to Network' },
-                    { key: 'confirming', label: 'Confirm Transaction' },
+                    { key: "preparing", label: "Prepare Transaction" },
+                    { key: "uploading", label: "Upload Files", optional: true },
+                    { key: "signing", label: "Sign Transaction" },
+                    { key: "submitting", label: "Submit to Network" },
+                    { key: "confirming", label: "Confirm Transaction" },
                   ].map((stepItem, index) => {
                     const stepKey = stepItem.key as TransactionStep;
-                    const stepOrder = ['preparing', 'uploading', 'signing', 'submitting', 'confirming'];
+                    const stepOrder = [
+                      "preparing",
+                      "uploading",
+                      "signing",
+                      "submitting",
+                      "confirming",
+                    ];
                     const currentIndex = stepOrder.indexOf(step);
                     const itemIndex = stepOrder.indexOf(stepKey);
-                    
-                    const isCompleted = currentIndex > itemIndex || step === 'success';
+
+                    const isCompleted =
+                      currentIndex > itemIndex || step === "success";
                     const isCurrent = step === stepKey;
 
                     return (
@@ -172,25 +200,29 @@ export default function TransactionStatusModal({
                         key={stepKey}
                         className={`flex items-center gap-3 font-mono text-sm ${
                           isCompleted
-                            ? 'text-afrihealth-green'
+                            ? "text-afrihealth-green"
                             : isCurrent
-                            ? 'text-afrihealth-orange'
-                            : 'text-gray-600'
+                            ? "text-afrihealth-orange"
+                            : "text-gray-600"
                         }`}
                       >
                         <div
                           className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${
                             isCompleted
-                              ? 'bg-afrihealth-green text-black'
+                              ? "bg-afrihealth-green text-black"
                               : isCurrent
-                              ? 'bg-afrihealth-orange text-black animate-pulse'
-                              : 'bg-gray-800 text-gray-600'
+                              ? "bg-afrihealth-orange text-black animate-pulse"
+                              : "bg-gray-800 text-gray-600"
                           }`}
                         >
-                          {isCompleted ? '✓' : index + 1}
+                          {isCompleted ? "✓" : index + 1}
                         </div>
                         <span>{stepItem.label}</span>
-                        {stepItem.optional && <span className="text-gray-600 text-xs">(optional)</span>}
+                        {stepItem.optional && (
+                          <span className="text-gray-600 text-xs">
+                            (optional)
+                          </span>
+                        )}
                       </div>
                     );
                   })}
@@ -199,7 +231,9 @@ export default function TransactionStatusModal({
                 {/* Transaction ID */}
                 {transactionId && (
                   <div className="bg-gray-800 rounded-lg p-4 space-y-2">
-                    <p className="font-mono text-xs text-gray-400">Transaction ID</p>
+                    <p className="font-mono text-xs text-gray-400">
+                      Transaction ID
+                    </p>
                     <p className="font-mono text-sm text-white break-all">
                       {transactionId}
                     </p>
@@ -234,14 +268,14 @@ export default function TransactionStatusModal({
                       whileTap={{ scale: 0.98 }}
                       onClick={onClose}
                       className={`flex-1 py-3 px-6 rounded-xl font-mono font-bold transition-all ${
-                        step === 'success'
-                          ? 'bg-afrihealth-green text-black hover:bg-green-600'
-                          : 'bg-gray-800 text-white hover:bg-gray-700'
+                        step === "success"
+                          ? "bg-afrihealth-green text-black hover:bg-green-600"
+                          : "bg-gray-800 text-white hover:bg-gray-700"
                       }`}
                     >
-                      {step === 'success' ? 'Done' : 'Close'}
+                      {step === "success" ? "Done" : "Close"}
                     </motion.button>
-                    {step === 'error' && (
+                    {step === "error" && (
                       <motion.button
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
@@ -262,60 +296,4 @@ export default function TransactionStatusModal({
   );
 
   return createPortal(modalContent, document.body);
-}
-
-/**
- * Hook for managing transaction modal state
- */
-export function useTransactionModal() {
-  const [state, setState] = useState<{
-    isOpen: boolean;
-    step: TransactionStep;
-    progress?: number;
-    message?: string;
-    transactionId?: string;
-    error?: string;
-  }>({
-    isOpen: false,
-    step: 'idle',
-  });
-
-  const openModal = (step: TransactionStep = 'preparing', message?: string) => {
-    setState({ isOpen: true, step, message });
-  };
-
-  const updateStep = (step: TransactionStep, message?: string, progress?: number) => {
-    setState((prev: typeof state) => ({ ...prev, step, message, progress }));
-  };
-
-  const setProgress = (progress: number) => {
-    setState((prev: typeof state) => ({ ...prev, progress }));
-  };
-
-  const setTransactionId = (transactionId: string) => {
-    setState((prev: typeof state) => ({ ...prev, transactionId }));
-  };
-
-  const setError = (error: string) => {
-    setState((prev: typeof state) => ({ ...prev, step: 'error', error }));
-  };
-
-  const setSuccess = (message?: string, transactionId?: string) => {
-    setState((prev: typeof state) => ({ ...prev, step: 'success', message, transactionId }));
-  };
-
-  const closeModal = () => {
-    setState({ isOpen: false, step: 'idle' });
-  };
-
-  return {
-    ...state,
-    openModal,
-    updateStep,
-    setProgress,
-    setTransactionId,
-    setError,
-    setSuccess,
-    closeModal,
-  };
 }

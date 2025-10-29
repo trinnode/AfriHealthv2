@@ -1,4 +1,4 @@
-import { Suspense, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import {
   OrbitControls,
@@ -10,8 +10,9 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import * as THREE from "three";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "./ui/Toast";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useAccount } from "wagmi";
+import { useToast } from "../hooks/useToast";
+import { RoleSelectionModal } from "./RoleSelectionModal";
 
 function HealthSphere({
   position = [0, 0, 0],
@@ -148,22 +149,36 @@ function Scene() {
   );
 }
 
-
 export default function LandingPage() {
   const navigate = useNavigate();
   const { showToast } = useToast()
-  const [isConnecting, setIsConnecting] = useState(false);
-  const { openConnectModal } = useConnectModal();
-
+  const { address, isConnected } = useAccount();
+  const pendingRoute = useRef<string | null>(null);
   const [showDetails, setShowDetails] = useState(false);
-  const [role, setRole] = useState<"patient" | "provider">("patient")
+  const [showRoleModal, setShowRoleModal] = useState(false);
 
-  const handleConnectWallet = async () => {
-    setIsConnecting(true);
-    openConnectModal?.();
-    showToast({ title: 'Wallet Connected successfully.', type: `success` });
-    setIsConnecting(false);
-    navigate(role === 'patient' ? '/patient' : '/provider');
+  useEffect(() => {
+    if (isConnected && address && pendingRoute.current) {
+      navigate(pendingRoute.current);
+      pendingRoute.current = null;
+      showToast({
+        title: "Wallet connected",
+        message: `Connected with ${address.slice(0, 6)}...${address.slice(-4)}`,
+        type: "success",
+      });
+    }
+  }, [isConnected, address, navigate, showToast]);
+
+  const handleGetStarted = () => {
+    setShowRoleModal(true);
+  };
+
+  const handleSelectRole = (targetRole: "patient" | "provider") => {
+    // Set the target route
+    pendingRoute.current = targetRole === "patient" ? "/patient" : "/provider";
+
+    // The RoleSelectionModal will handle opening the wallet connection
+    // When the user connects, the useEffect above will redirect them
   };
 
   const features = [
@@ -266,7 +281,6 @@ export default function LandingPage() {
 
   return (
     <div className="relative w-full min-h-screen bg-black text-white overflow-hidden">
-
       <div className="fixed inset-0 z-0 opacity-30">
         <Canvas>
           <Suspense fallback={null}>
@@ -302,33 +316,15 @@ export default function LandingPage() {
                   boxShadow: "0 20px 60px rgba(74, 95, 58, 0.4)",
                 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => {
-                  setRole("patient")
-                  handleConnectWallet()
-                }}
-                className="px-10 py-5 bg-transparent border-3 border-afrihealth-green text-afrihealth-green font-mono font-bold text-lg rounded-xl hover:bg-afrihealth-green hover:text-black transition-all shadow-2xl"
-              >Connect as a Patient
-              </motion.button>
-              <motion.button
-                whileHover={{
-                  scale: 1.08,
-                  boxShadow: "0 20px 60px rgba(255, 107, 53, 0.4)",
-                }}
-                whileTap={{ scale: 0.98 }}
-                disabled={isConnecting}
-                onClick={() => {
-                  setRole("provider")
-                  handleConnectWallet()
-                }}
-                className="px-10 py-5 bg-transparent border-3 border-afrihealth-orange text-afrihealth-orange font-mono font-bold text-lg rounded-xl hover:bg-afrihealth-orange hover:text-black transition-all shadow-2xl"
+                onClick={handleGetStarted}
+                className="px-12 py-6 bg-gradient-to-r from-afrihealth-green to-afrihealth-teal text-white font-mono font-bold text-xl rounded-xl hover:shadow-2xl hover:shadow-afrihealth-green/50 transition-all"
               >
-                {isConnecting ? "Connecting.." : "🏥Connect as a Provider"}
+                🚀 Get Started
               </motion.button>
             </div>
 
             <motion.button
               whileHover={{ scale: 1.05 }}
-              disabled={isConnecting}
               onClick={() => setShowDetails(!showDetails)}
               className="font-mono text-sm text-gray-500 hover:text-afrihealth-orange transition-colors"
             >
@@ -336,6 +332,13 @@ export default function LandingPage() {
             </motion.button>
           </motion.div>
         </section>
+
+        {/* Role Selection Modal */}
+        <RoleSelectionModal
+          isOpen={showRoleModal}
+          onClose={() => setShowRoleModal(false)}
+          onSelectRole={handleSelectRole}
+        />
 
         <AnimatePresence>
           {showDetails && (
@@ -542,11 +545,10 @@ export default function LandingPage() {
                       boxShadow: "0 30px 80px rgba(255, 107, 53, 0.5)",
                     }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={handleConnectWallet}
-                    disabled={isConnecting}
-                    className="px-14 py-6 bg-afrihealth-orange text-black font-mono font-bold text-xl rounded-2xl hover:bg-opacity-90 transition-all disabled:opacity-50 shadow-2xl border-3 border-afrihealth-orange"
+                    onClick={handleGetStarted}
+                    className="px-14 py-6 bg-afrihealth-orange text-black font-mono font-bold text-xl rounded-2xl hover:bg-opacity-90 transition-all shadow-2xl border-3 border-afrihealth-orange"
                   >
-                    {isConnecting ? "Connecting..." : "🚀 Get Started Now"}
+                    🚀 Get Started Now
                   </motion.button>
                 </div>
               </section>

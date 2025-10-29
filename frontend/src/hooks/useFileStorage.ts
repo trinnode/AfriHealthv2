@@ -9,6 +9,7 @@ import type {
   UploadResult,
   UploadProgress,
 } from "../services/fileStorageService";
+import { extractErrorMessage } from "../utils/error";
 
 /**
  * Hook for file upload
@@ -27,7 +28,7 @@ export function useFileUpload() {
         encrypt?: boolean;
         memo?: string;
       } = {}
-    ) => {
+    ): Promise<UploadResult> => {
       setIsUploading(true);
       setError(null);
       setResult(null);
@@ -47,8 +48,8 @@ export function useFileUpload() {
         }
 
         return uploadResult;
-      } catch (err: any) {
-        const errorMessage = err.message || "Upload failed";
+      } catch (error: unknown) {
+        const errorMessage = extractErrorMessage(error, "Upload failed");
         setError(errorMessage);
         return {
           success: false,
@@ -95,7 +96,7 @@ export function useFileDownload() {
         encryptionKey?: string;
         encryptionIv?: string;
       } = {}
-    ) => {
+    ): Promise<Uint8Array | null> => {
       setIsDownloading(true);
       setError(null);
       setData(null);
@@ -110,8 +111,8 @@ export function useFileDownload() {
 
         setData(fileData);
         return fileData;
-      } catch (err: any) {
-        const errorMessage = err.message || "Download failed";
+      } catch (error: unknown) {
+        const errorMessage = extractErrorMessage(error, "Download failed");
         setError(errorMessage);
         return null;
       } finally {
@@ -194,7 +195,7 @@ export function useMultiFileUpload() {
         preferHFS?: boolean;
         encrypt?: boolean;
       } = {}
-    ) => {
+    ): Promise<UploadResult[]> => {
       setIsUploading(true);
       const fileStorage = getFileStorageService();
       const results: UploadResult[] = [];
@@ -241,20 +242,20 @@ export function useMultiFileUpload() {
           });
 
           results.push(result);
-        } catch (err: any) {
-          const error = err.message || "Upload failed";
+        } catch (error: unknown) {
+          const errorMessage = extractErrorMessage(error, "Upload failed");
           setUploads((prev) => {
             const newMap = new Map(prev);
             const current = newMap.get(fileId);
             if (current) {
-              newMap.set(fileId, { ...current, error });
+              newMap.set(fileId, { ...current, error: errorMessage });
             }
             return newMap;
           });
 
           results.push({
             success: false,
-            error,
+            error: errorMessage,
             storageType: "ipfs",
           });
         }
@@ -306,8 +307,8 @@ export function useFileEncryption() {
         const data = new Uint8Array(arrayBuffer);
         const result = await fileStorage.encryptFile(data);
         return result;
-      } catch (err: any) {
-        setError(err.message || "Encryption failed");
+      } catch (error: unknown) {
+        setError(extractErrorMessage(error, "Encryption failed"));
         return null;
       } finally {
         setIsProcessing(false);
@@ -329,8 +330,8 @@ export function useFileEncryption() {
         const fileStorage = getFileStorageService();
         const result = await fileStorage.decryptFile(encryptedData, key, iv);
         return result;
-      } catch (err: any) {
-        setError(err.message || "Decryption failed");
+      } catch (error: unknown) {
+        setError(extractErrorMessage(error, "Decryption failed"));
         return null;
       } finally {
         setIsProcessing(false);

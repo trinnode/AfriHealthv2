@@ -2,7 +2,8 @@
  * Custom React Hook for API calls with loading and error states
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { extractErrorMessage } from "../utils/error";
 
 export interface UseApiState<T> {
   data: T | null;
@@ -10,7 +11,7 @@ export interface UseApiState<T> {
   error: string | null;
 }
 
-export interface UseApiReturn<T, P extends any[] = []> {
+export interface UseApiReturn<T, P extends unknown[] = []> {
   data: T | null;
   loading: boolean;
   error: string | null;
@@ -21,7 +22,7 @@ export interface UseApiReturn<T, P extends any[] = []> {
 /**
  * Generic hook for API calls with automatic loading/error state management
  */
-export function useApi<T, P extends any[] = []>(
+export function useApi<T, P extends unknown[] = []>(
   apiFunction: (...args: P) => Promise<T>
 ): UseApiReturn<T, P> {
   const [state, setState] = useState<UseApiState<T>>({
@@ -37,9 +38,8 @@ export function useApi<T, P extends any[] = []>(
         const result = await apiFunction(...args);
         setState({ data: result, loading: false, error: null });
         return result;
-      } catch (err: any) {
-        const errorMessage =
-          err.response?.data?.error || err.message || "An error occurred";
+      } catch (err: unknown) {
+        const errorMessage = extractErrorMessage(err);
         setState({ data: null, loading: false, error: errorMessage });
         return null;
       }
@@ -75,17 +75,16 @@ export function useApiQuery<T>(
     try {
       const result = await apiFunction();
       setState({ data: result, loading: false, error: null });
-    } catch (err: any) {
-      const errorMessage =
-        err.response?.data?.error || err.message || "An error occurred";
+    } catch (err: unknown) {
+      const errorMessage = extractErrorMessage(err);
       setState({ data: null, loading: false, error: errorMessage });
     }
   }, [apiFunction]);
 
   // Initial fetch
-  useState(() => {
-    fetchData();
-  });
+  useEffect(() => {
+    void fetchData();
+  }, [fetchData]);
 
   return {
     ...state,

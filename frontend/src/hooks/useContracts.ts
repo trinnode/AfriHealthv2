@@ -3,10 +3,30 @@
  * React hooks for seamless contract interactions
  */
 
-import { useState, useEffect, useCallback } from "react";
+import {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  type DependencyList,
+} from "react";
 import { getEnhancedWalletService } from "../services/enhancedWalletService";
 import type { ContractManager } from "../contracts/services/ContractManager";
 import type { TransactionResult } from "../contracts/services/HederaContractService";
+import { extractErrorMessage } from "../utils/error";
+
+interface WalletConnectedEventDetail {
+  accountId: string | null;
+  network: "testnet" | "mainnet" | null;
+  topic?: string | null;
+  pairingString?: string | null;
+  hasContracts?: boolean;
+}
+
+interface ContractQueryOptions {
+  enabled?: boolean;
+  refetchInterval?: number;
+}
 
 /**
  * Hook to access contract manager
@@ -26,8 +46,8 @@ export function useContractManager() {
         setContractManager(manager);
         setIsReady(true);
         setError(null);
-      } catch (err: any) {
-        setError(err.message);
+      } catch (error: unknown) {
+        setError(extractErrorMessage(error));
         setIsReady(false);
       }
     };
@@ -79,8 +99,11 @@ export function useContractTransaction() {
         }
 
         return txResult;
-      } catch (err: any) {
-        const errorMessage = err.message || "Transaction execution failed";
+      } catch (error: unknown) {
+        const errorMessage = extractErrorMessage(
+          error,
+          "Transaction execution failed"
+        );
         setError(errorMessage);
         return {
           success: false,
@@ -113,8 +136,8 @@ export function useContractTransaction() {
  */
 export function useContractQuery<T>(
   queryFn: () => Promise<T | null>,
-  dependencies: any[] = [],
-  options: { enabled?: boolean; refetchInterval?: number } = {}
+  dependencies: DependencyList = [],
+  options: ContractQueryOptions = {}
 ) {
   const [data, setData] = useState<T | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -122,6 +145,10 @@ export function useContractQuery<T>(
   const [lastFetch, setLastFetch] = useState<number>(0);
 
   const { enabled = true, refetchInterval } = options;
+  const dependencyToken = useMemo(
+    () => createDependencyToken(dependencies),
+    [dependencies]
+  );
 
   const refetch = useCallback(async () => {
     if (!enabled) return;
@@ -133,16 +160,19 @@ export function useContractQuery<T>(
       const result = await queryFn();
       setData(result);
       setLastFetch(Date.now());
-    } catch (err: any) {
-      setError(err.message || "Query failed");
+    } catch (error: unknown) {
+      setError(extractErrorMessage(error, "Query failed"));
     } finally {
       setIsLoading(false);
     }
   }, [queryFn, enabled]);
 
   useEffect(() => {
-    refetch();
-  }, [...dependencies, enabled]);
+    if (!enabled) {
+      return;
+    }
+    void refetch();
+  }, [dependencyToken, enabled, refetch]);
 
   useEffect(() => {
     if (refetchInterval && enabled) {
@@ -184,10 +214,11 @@ export function useWalletConnection() {
       }
     };
 
-    const handleConnected = (event: any) => {
+    const handleConnected = (event: Event) => {
+      const detail = (event as CustomEvent<WalletConnectedEventDetail>).detail;
       setIsConnected(true);
-      setAccountId(event.detail.accountId);
-      setHasContracts(event.detail.hasContracts || false);
+      setAccountId(detail?.accountId ?? null);
+      setHasContracts(detail?.hasContracts ?? false);
     };
 
     const handleDisconnected = () => {
@@ -219,10 +250,16 @@ export function useWalletConnection() {
 /**
  * Hook to listen for transaction events
  */
-export function useTransactionListener(callback: (data: any) => void) {
+export function useTransactionListener<T = unknown>(
+  callback: (data: T) => void
+) {
   useEffect(() => {
-    const handleTransaction = (event: any) => {
-      callback(event.detail);
+    const handleTransaction = (event: Event) => {
+      if (!("detail" in event)) {
+        return;
+      }
+      const customEvent = event as CustomEvent<T>;
+      callback(customEvent.detail);
     };
 
     window.addEventListener("transaction:response", handleTransaction);
@@ -231,4 +268,24 @@ export function useTransactionListener(callback: (data: any) => void) {
       window.removeEventListener("transaction:response", handleTransaction);
     };
   }, [callback]);
+}
+
+function createDependencyToken(dependencies: DependencyList): string {
+  return dependencies
+    .map((dependency) => {
+      if (dependency === null) return "null";
+      if (dependency === undefined) return "undefined";
+      if (typeof dependency === "object") {
+        try {
+          return JSON.stringify(dependency);
+        } catch {
+          return "[object]";
+        }
+      }
+      if (typeof dependency === "function") {
+        return dependency.name || "anonymous";
+      }
+      return String(dependency);
+    })
+    .join("|");
 }

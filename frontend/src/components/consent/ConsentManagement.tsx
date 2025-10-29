@@ -13,7 +13,7 @@ import {
 } from "../../hooks/useConsentContract";
 import { type Consent } from "../../contracts/services/ConsentContract";
 import { TransactionModal } from "../ui/TransactionModal";
-import { useToast } from "../ui/Toast";
+import { useToast } from "../../hooks/useToast";
 
 interface ConsentManagementProps {
   accountId: string;
