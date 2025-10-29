@@ -323,10 +323,6 @@ class ApiClient {
     return response.data;
   }
 
-  // ==========================================
-  // 🏊 INSURANCE POOL
-  // ==========================================
-
   async createInsurancePool(data: {
     name: string;
     description: string;
@@ -366,10 +362,6 @@ class ApiClient {
     return response.data;
   }
 
-  // ==========================================
-  // ⚖️ DISPUTE RESOLUTION
-  // ==========================================
-
   async createDispute(data: {
     disputeType: number;
     relatedId: string;
@@ -396,9 +388,6 @@ class ApiClient {
     return response.data;
   }
 
-  // ==========================================
-  // 🗳️ GOVERNANCE
-  // ==========================================
 
   async createProposal(data: {
     title: string;
@@ -431,10 +420,6 @@ class ApiClient {
     return response.data;
   }
 
-  // ==========================================
-  // 🔍 AUDIT
-  // ==========================================
-
   async getAccessLogs(
     address: string,
     startTime: number,
@@ -451,16 +436,11 @@ class ApiClient {
     return response.data;
   }
 
-  // ==========================================
-  // 🏥 HEALTH CHECK
-  // ==========================================
-
   async healthCheck(): Promise<ApiResponse> {
     const response = await axios.get(`${API_BASE_URL}/health`);
     return response.data;
   }
 }
 
-// Export singleton instance
 export const apiClient = new ApiClient();
 export default apiClient;

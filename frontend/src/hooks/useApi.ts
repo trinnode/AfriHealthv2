@@ -19,9 +19,7 @@ export interface UseApiReturn<T, P extends unknown[] = []> {
   reset: () => void;
 }
 
-/**
- * Generic hook for API calls with automatic loading/error state management
- */
+
 export function useApi<T, P extends unknown[] = []>(
   apiFunction: (...args: P) => Promise<T>
 ): UseApiReturn<T, P> {

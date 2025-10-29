@@ -1,15 +1,9 @@
-/**
- * Custom hooks for Consent management
- */
-
 import { useState, useEffect, useCallback } from 'react';
 import { apiClient } from '../services/apiClient';
 import { useApi } from './useApi';
 import type { Consent } from '../types';
 
-/**
- * Hook for granting consent
- */
+
 export function useGrantConsent() {
   return useApi(async (params: {
     provider: string;
@@ -22,9 +16,7 @@ export function useGrantConsent() {
   });
 }
 
-/**
- * Hook for revoking consent
- */
+
 export function useRevokeConsent() {
   return useApi(async (consentId: string) => {
     const response = await apiClient.revokeConsent(consentId);
