@@ -5,10 +5,6 @@ import { ApiResponse } from '../types/api';
 
 const router: Router = express.Router();
 
-/**
- * Get patient dashboard statistics
- * GET /api/patient/stats/:patientAddress
- */
 router.get('/stats/:patientAddress', async (req: Request, res: Response) => {
   try {
     const { patientAddress } = req.params;
@@ -223,15 +219,10 @@ router.post('/invoices/:invoiceId/approve', [
   }
 });
 
-/**
- * Get patient insurance claims
- * GET /api/patient/claims/:patientAddress
- */
 router.get('/claims/:patientAddress', async (req: Request, res: Response) => {
   try {
     const { patientAddress } = req.params;
 
-    // Mock claims data (in production, this would come from InsurancePoolFacet)
     const claims = [
       {
         claimId: '1',
