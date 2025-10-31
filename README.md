@@ -75,6 +75,12 @@ afrihealth-ledger/
 └── scripts/           # Deployment and utility scripts
 ```
 
+
 ## License
 
 MIT License - see LICENSE file for details.
+
+## Pitch Deck
+
+- [Pitch Deck](https://drive.google.com/file/d/1UBcUA5MNATWeeWMPgy0FdhDRMJa-OSo1/view?usp=drivesdk)
+- [Live Deployment](https://afri-healthv2-frontend-9tth.vercel.app/)

@@ -45,7 +45,6 @@ export class AfriHealthContractService {
 
   constructor(config: ContractConfig) {
     this.diamondAddress = ContractId.fromString(config.diamondAddress);
-    log("{diamondAddress, afriHealthCOntractService.ts:48} : ", this.diamondAddress);
     this.client = config.client;
   }
 
@@ -231,17 +230,14 @@ export class AfriHealthContractService {
         .addStringArray(scopes)
         .addUint256(expirationTime)
         .addString(purpose);
-      log("{params, afriHealthContractService.ts:239} : ", params)
       const transaction = new ContractExecuteTransaction()
         .setContractId(this.diamondAddress)
         .setGas(this.gasLimit)
         .setFunction("grantConsent", params);
-      log("{transaction, afriHealthContractService.ts:244} : ", transaction)
-
       const response = await transaction.execute(this.client);
-      log("{response, afriHealthContractService.ts:247} : ", response)
+      log("{response, afriHealthContractService.ts:239} : ", response)
       const receipt = await response.getReceipt(this.client);
-      log("{receipt, afriHealthContractService.ts:249} : ", receipt)
+      log("{receipt, afriHealthContractService.ts:241} : ", receipt)
 
       return {
         success: true,

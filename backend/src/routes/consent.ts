@@ -1,8 +1,3 @@
-/**
- * Consent Management Routes
- * Handles consent granting, revoking, and queries
- */
-
 import express, { Router } from "express";
 import { AfriHealthContractService } from "../services/afrihealthContractService";
 import { getHederaClient } from "../services/hederaService";
@@ -21,12 +16,10 @@ router.post("/grant", async (req, res) => {
       });
     }
     const client = await getHederaClient();
-    log("{consent.ts:24} gotten client")
     const contractService = new AfriHealthContractService({
-      diamondAddress: process.env.DIAMOND_CONTRACT_ADDRESS!,
+      diamondAddress: process.env.DIAMOND_CONTRACT_ID!,
       client,
     });
-    log("{consent.ts:29} instantiated contractService")
     const result = await contractService.grantConsent(
       provider,
       scopes,
@@ -42,7 +35,7 @@ router.post("/grant", async (req, res) => {
         message: "Consent granted successfully",
       });
     } else {
-      log("error {consent.ts:44}")
+      log("error {consent.ts:40}")
       console.log("error: ", result.error)
       res.status(500).json({
         success: false,
@@ -50,7 +43,7 @@ router.post("/grant", async (req, res) => {
       });
     }
   } catch (error: any) {
-     log("error {consent.ts:52}")
+     log("error {consent.ts:48}")
       console.log("error: ", error.message)
     res.status(500).json({
       success: false,
