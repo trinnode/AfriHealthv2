@@ -151,7 +151,7 @@ function Scene() {
 
 export default function LandingPage() {
   const navigate = useNavigate();
-  const { showToast } = useToast();
+  const { showToast } = useToast()
   const { address, isConnected } = useAccount();
   const pendingRoute = useRef<string | null>(null);
   const [showDetails, setShowDetails] = useState(false);
@@ -174,11 +174,7 @@ export default function LandingPage() {
   };
 
   const handleSelectRole = (targetRole: "patient" | "provider") => {
-    // Set the target route
     pendingRoute.current = targetRole === "patient" ? "/patient" : "/provider";
-
-    // The RoleSelectionModal will handle opening the wallet connection
-    // When the user connects, the useEffect above will redirect them
   };
 
   const features = [
@@ -333,7 +329,6 @@ export default function LandingPage() {
           </motion.div>
         </section>
 
-        {/* Role Selection Modal */}
         <RoleSelectionModal
           isOpen={showRoleModal}
           onClose={() => setShowRoleModal(false)}
@@ -348,7 +343,6 @@ export default function LandingPage() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.5 }}
             >
-              {/* Key Features */}
               <section className="py-24 px-6 bg-gradient-to-b from-black via-gray-900 to-black">
                 <div className="max-w-7xl mx-auto">
                   <motion.h2
@@ -499,7 +493,7 @@ export default function LandingPage() {
                         whileHover={{ scale: 1.1, y: -10 }}
                         className="bg-gradient-to-br from-gray-900 to-black border-2 border-afrihealth-orange rounded-2xl p-8 shadow-2xl hover:shadow-afrihealth-orange/50 transition-all"
                       >
-                        <div className="font-lora text-6xl md:text-7xl font-bold text-afrihealth-orange mb-4">
+                        <div className="font-lora text-lg md:text-2xl font-bold text-afrihealth-orange mb-4">
                           {stat.value}
                         </div>
                         <div className="font-mono text-base text-gray-300 font-semibold">
@@ -511,7 +505,6 @@ export default function LandingPage() {
                 </div>
               </section>
 
-              {/* Final CTA */}
               <section className="py-32 px-6 bg-gradient-to-t from-black via-gray-900 to-black">
                 <div className="max-w-5xl mx-auto text-center">
                   <motion.h2

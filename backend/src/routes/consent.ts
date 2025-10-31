@@ -1,18 +1,11 @@
-/**
- * Consent Management Routes
- * Handles consent granting, revoking, and queries
- */
-
 import express, { Router } from "express";
 import { AfriHealthContractService } from "../services/afrihealthContractService";
 import { getHederaClient } from "../services/hederaService";
+import { log } from "console";
 
 const router: Router = express.Router();
 
-/**
- * POST /api/consent/grant
- * Grant consent to a provider
- */
+
 router.post("/grant", async (req, res) => {
   try {
     const { provider, scopes, expirationTime, purpose } = req.body;
@@ -22,19 +15,18 @@ router.post("/grant", async (req, res) => {
         error: "Provider, scopes, and expiration time are required",
       });
     }
-
     const client = await getHederaClient();
     const contractService = new AfriHealthContractService({
-      diamondAddress: process.env.DIAMOND_CONTRACT_ADDRESS!,
+      diamondAddress: process.env.DIAMOND_CONTRACT_ID!,
       client,
     });
-
     const result = await contractService.grantConsent(
       provider,
       scopes,
       expirationTime,
       purpose || ""
     );
+    log("{result}: ", result)
 
     if (result.success) {
       res.json({
@@ -43,12 +35,16 @@ router.post("/grant", async (req, res) => {
         message: "Consent granted successfully",
       });
     } else {
+      log("error {consent.ts:40}")
+      console.log("error: ", result.error)
       res.status(500).json({
         success: false,
         error: result.error,
       });
     }
   } catch (error: any) {
+     log("error {consent.ts:48}")
+      console.log("error: ", error.message)
     res.status(500).json({
       success: false,
       error: error.message,
@@ -56,10 +52,6 @@ router.post("/grant", async (req, res) => {
   }
 });
 
-/**
- * POST /api/consent/revoke
- * Revoke consent
- */
 router.post("/revoke", async (req, res) => {
   try {
     const { consentId } = req.body;
@@ -96,10 +88,6 @@ router.post("/revoke", async (req, res) => {
   }
 });
 
-/**
- * GET /api/consent/check
- * Check if valid consent exists
- */
 router.get("/check", async (req, res) => {
   try {
     const { patient, provider, scope } = req.query;
@@ -141,10 +129,7 @@ router.get("/check", async (req, res) => {
   }
 });
 
-/**
- * GET /api/consent/patient/:address
- * Get all consents for a patient
- */
+
 router.get("/patient/:address", async (req, res) => {
   try {
     const { address } = req.params;

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import { Button } from "../UI";
 import { useGrantConsent } from "../../hooks/useConsent";
+import { useToast } from "../../hooks/useToast";
 
 interface GrantConsentModalProps {
   isOpen: boolean;
@@ -22,6 +23,7 @@ export function GrantConsentModal({
     scopes: [] as string[],
     expirationDays: 30,
   });
+  const {showToast} = useToast()
 
   const availableScopes = [
     { value: "view_medical_history", label: "View Medical History" },
@@ -45,12 +47,16 @@ export function GrantConsentModal({
     e.preventDefault();
 
     if (!formData.provider || formData.scopes.length === 0) {
-      alert("Please fill in all required fields");
+      showToast({
+        type: "info",
+        title: "Incomplete submission",
+        message: "Pls fill required form",
+        duration: 3000,
+      })
       return;
     }
 
-    const expirationTime =
-      Math.floor(Date.now() / 1000) + formData.expirationDays * 24 * 60 * 60;
+    const expirationTime =  Math.floor(Date.now() / 1000) + formData.expirationDays * 24 * 60 * 60;
 
     const result = await grantConsentApi.execute({
       provider: formData.provider,
@@ -60,10 +66,13 @@ export function GrantConsentModal({
     });
 
     if (result) {
-      alert("Consent granted successfully!");
+        showToast({
+        type: "success",
+        title: "Consent granted successfully",
+        duration: 3000,
+      })
       onSuccess();
       onClose();
-      // Reset form
       setFormData({
         provider: "",
         purpose: "",
@@ -71,7 +80,11 @@ export function GrantConsentModal({
         expirationDays: 30,
       });
     } else {
-      alert(`Failed to grant consent: ${grantConsentApi.error}`);
+         showToast({
+        type: "error",
+        title: "Failed to grant consent",
+        duration: 3000,
+      })
     }
   };
 
@@ -79,7 +92,6 @@ export function GrantConsentModal({
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -112,9 +124,7 @@ export function GrantConsentModal({
                 </p>
               </div>
 
-              {/* Form */}
               <form onSubmit={handleSubmit} className="p-6 space-y-6">
-                {/* Provider Address */}
                 <div>
                   <label className="block text-sm font-mono font-bold text-afrihealth-orange mb-2">
                     Provider Wallet Address *
@@ -126,7 +136,7 @@ export function GrantConsentModal({
                       setFormData({ ...formData, provider: e.target.value })
                     }
                     placeholder="0x..."
-                    className="w-full px-4 py-3 bg-afrihealth-gray-800 border border-afrihealth-gray-700 rounded-lg text-white font-mono focus:outline-none focus:border-afrihealth-orange"
+                    className="w-full px-4 py-3 bg-afrihealth-gray-800 border font-bold border-afrihealth-gray-700 rounded-lg font-mono focus:outline-none focus:border-afrihealth-orange text-afrihealth-orange"
                     required
                   />
                 </div>
@@ -143,7 +153,7 @@ export function GrantConsentModal({
                       setFormData({ ...formData, purpose: e.target.value })
                     }
                     placeholder="e.g., Annual checkup, Surgery consultation"
-                    className="w-full px-4 py-3 bg-afrihealth-gray-800 border border-afrihealth-gray-700 rounded-lg text-white font-mono focus:outline-none focus:border-afrihealth-orange"
+                    className="w-full px-4 py-3 bg-afrihealth-gray-800 border font-bold border-afrihealth-gray-700 rounded-lg font-mono focus:outline-none focus:border-afrihealth-orange text-afrihealth-orange"
                   />
                 </div>
 
@@ -157,19 +167,17 @@ export function GrantConsentModal({
                       <div
                         key={scope.value}
                         onClick={() => handleScopeToggle(scope.value)}
-                        className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                          formData.scopes.includes(scope.value)
+                        className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${formData.scopes.includes(scope.value)
                             ? "border-afrihealth-green bg-afrihealth-green/10"
                             : "border-afrihealth-gray-700 hover:border-afrihealth-gray-600"
-                        }`}
+                          }`}
                       >
                         <div className="flex items-center gap-2">
                           <div
-                            className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
-                              formData.scopes.includes(scope.value)
+                            className={`w-5 h-5 rounded border-2 flex items-center justify-center ${formData.scopes.includes(scope.value)
                                 ? "border-afrihealth-green bg-afrihealth-green"
                                 : "border-afrihealth-gray-600"
-                            }`}
+                              }`}
                           >
                             {formData.scopes.includes(scope.value) && (
                               <span className="text-black text-xs">✓</span>
@@ -197,7 +205,7 @@ export function GrantConsentModal({
                         expirationDays: Number(e.target.value),
                       })
                     }
-                    className="w-full px-4 py-3 bg-afrihealth-gray-800 border border-afrihealth-gray-700 rounded-lg text-white font-mono focus:outline-none focus:border-afrihealth-orange"
+                    className="w-full px-4 py-3 bg-afrihealth-gray-800 border font-bold border-afrihealth-gray-700 rounded-lg font-mono focus:outline-none focus:border-afrihealth-orange text-afrihealth-orange"
                   >
                     <option value={7}>7 Days</option>
                     <option value={14}>14 Days</option>

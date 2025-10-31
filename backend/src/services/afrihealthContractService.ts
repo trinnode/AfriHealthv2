@@ -8,7 +8,9 @@ import {
   ContractExecuteTransaction,
   ContractCallQuery,
   ContractFunctionParameters,
+  ContractId,
 } from "@hashgraph/sdk";
+import { log } from "console";
 
 // Note: ABIs are loaded dynamically at runtime
 // They are not imported here to avoid TypeScript compilation issues
@@ -37,24 +39,17 @@ export interface QueryResult {
  * Implements all 14 facets with full functionality
  */
 export class AfriHealthContractService {
-  private diamondAddress: string;
+  private diamondAddress: ContractId;
   private client: Client;
   private gasLimit: number = 1000000;
 
   constructor(config: ContractConfig) {
-    this.diamondAddress = config.diamondAddress;
+    this.diamondAddress = ContractId.fromString(config.diamondAddress);
     this.client = config.client;
   }
 
-  // ==========================================
-  // 🔐 IDENTITY FACET
-  // ==========================================
-
-  /**
-   * Register a new identity
-   */
   async registerIdentity(
-    identityType: number, // 0=Patient, 1=Provider, 2=Insurer, 3=Regulator
+    identityType: number,
     licenseNumber: string = "",
     specialization: string = ""
   ): Promise<TransactionResult> {
@@ -235,14 +230,14 @@ export class AfriHealthContractService {
         .addStringArray(scopes)
         .addUint256(expirationTime)
         .addString(purpose);
-
       const transaction = new ContractExecuteTransaction()
         .setContractId(this.diamondAddress)
         .setGas(this.gasLimit)
         .setFunction("grantConsent", params);
-
       const response = await transaction.execute(this.client);
+      log("{response, afriHealthContractService.ts:239} : ", response)
       const receipt = await response.getReceipt(this.client);
+      log("{receipt, afriHealthContractService.ts:241} : ", receipt)
 
       return {
         success: true,
@@ -250,6 +245,7 @@ export class AfriHealthContractService {
         receipt,
       };
     } catch (error: any) {
+      log("{error, afriHealthContractService.ts:249} : ", error)
       return {
         success: false,
         transactionId: "",
@@ -258,9 +254,6 @@ export class AfriHealthContractService {
     }
   }
 
-  /**
-   * Revoke consent from a provider
-   */
   async revokeConsent(consentId: string): Promise<TransactionResult> {
     try {
       const params = new ContractFunctionParameters().addBytes32(

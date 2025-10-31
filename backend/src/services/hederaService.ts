@@ -17,9 +17,7 @@ dotenv.config();
 // Singleton instance
 let hederaServiceInstance: HederaService | null = null;
 
-/**
- * Get or create the Hedera Service instance
- */
+
 export async function getHederaClient(): Promise<Client> {
   if (!hederaServiceInstance) {
     hederaServiceInstance = new HederaService();
